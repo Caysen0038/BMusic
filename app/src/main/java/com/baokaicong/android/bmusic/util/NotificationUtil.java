@@ -1,4 +1,4 @@
-package com.baokaicong.android.bmusic.engine;
+package com.baokaicong.android.bmusic.util;
 
 import android.app.AppOpsManager;
 import android.app.Notification;
@@ -22,7 +22,7 @@ import java.util.List;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
 
-public class NotificationEngine {
+public class NotificationUtil {
     private static final String CHANNEL_NAME="bkcm";
     private static final String CHANNLE_ID="bkcm_";
     private int idcount= R.drawable.icon_bkc_trans_30;
@@ -34,61 +34,61 @@ public class NotificationEngine {
     private int bigIconId=iconId;
     private Notification notification;
     private List<Integer> flagList;
-    private NotificationEngine(){
+    private NotificationUtil(){
         flagList=new ArrayList<>();
     }
     private static class Holder{
-        private static NotificationEngine instance=new NotificationEngine();
+        private static NotificationUtil instance=new NotificationUtil();
     }
 
 
 
-    public static NotificationEngine Instance(){
+    public static NotificationUtil Instance(){
         return Holder.instance;
     }
 
-    public NotificationEngine init(Context context){
+    public NotificationUtil init(Context context){
         this.context=context;
         flagList.clear();
 
         return this;
     }
 
-    public NotificationEngine setImportance(int importance){
+    public NotificationUtil setImportance(int importance){
         this.importance=importance;
         return this;
     }
 
-    public NotificationEngine setTitile(String title){
+    public NotificationUtil setTitile(String title){
         this.title=title;
         return this;
     }
 
-    public NotificationEngine setText(String text){
+    public NotificationUtil setText(String text){
         this.text=text;
         return this;
     }
 
-    public NotificationEngine setIconDrawable(int drawable){
+    public NotificationUtil setIconDrawable(int drawable){
         this.iconId=drawable;
         return this;
     }
 
-    public NotificationEngine setBigIconDrawable(int drawable){
+    public NotificationUtil setBigIconDrawable(int drawable){
         this.bigIconId=drawable;
         return this;
     }
 
-    public NotificationEngine addFlag(int flag){
+    public NotificationUtil addFlag(int flag){
         flagList.add(flag);
         return this;
     }
 
-    public NotificationEngine build(RemoteViews views){
+    public NotificationUtil build(RemoteViews views){
         return build(views,views);
     }
 
-    public NotificationEngine build(RemoteViews views,RemoteViews bigViews){
+    public NotificationUtil build(RemoteViews views, RemoteViews bigViews){
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
         idcount++;
         String id=CHANNLE_ID+idcount;
@@ -150,7 +150,7 @@ public class NotificationEngine {
 
     private void checkEnable(){
 //        if(!isNotificationEnabled(context)){
-//            ToastHelper.showText(context,"无法展示通知栏信息");
+//            ToastUtil.showText(context,"无法展示通知栏信息");
 //        }
     }
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)

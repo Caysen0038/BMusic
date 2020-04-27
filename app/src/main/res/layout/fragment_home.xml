@@ -11,15 +11,64 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="70dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp">
+        <ImageView
+            android:id="@+id/user_img"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
+            android:layout_marginLeft="30dp"
+            android:background="@drawable/shape_user_wrap"
+            android:src="@drawable/icon_user_50"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_weight="1"
+            android:layout_gravity="center_vertical"
+            android:orientation="vertical">
+            <TextView
+                android:id="@+id/user_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:text="用户名"
+                android:textSize="18sp"
+                android:layout_gravity="center_vertical"
+                android:gravity="center"
+                android:layout_marginLeft="20dp"
+                android:textColor="@android:color/white"
+                android:background="@android:color/transparent"/>
+            <TextView
+                android:id="@+id/user_desc"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:text="..."
+                android:textSize="14sp"
+                android:layout_gravity="center_vertical"
+                android:gravity="center"
+                android:layout_marginLeft="20dp"
+                android:textColor="@color/textWhiteNormal"
+                android:background="@android:color/transparent"/>
+        </LinearLayout>
+
+    </LinearLayout>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="120dp"
         android:background="@drawable/shape_home_nav"
         android:orientation="horizontal"
-        android:layout_marginLeft="25dp"
-        android:layout_marginRight="25dp"
-        android:layout_marginTop="20dp"
-        android:layout_marginBottom="20dp"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:layout_marginTop="15dp"
+        android:layout_marginBottom="15dp"
         >
         <LinearLayout
             android:layout_width="wrap_content"
@@ -103,8 +152,9 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="20dp"
-        android:orientation="vertical">
+        android:layout_marginTop="10dp"
+        android:orientation="vertical"
+        android:background="@drawable/shape_home_menu">
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
@@ -112,28 +162,63 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="我的歌单"
-                android:textColor="@color/textNormal"
+                android:textColor="@color/textBlackNormal"
                 android:layout_gravity="center"
-                android:textSize="20sp"
+                android:textSize="18sp"
                 android:layout_marginLeft="20dp"
                 android:layout_marginTop="5dp"
                 android:layout_marginBottom="5dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="+"
-                android:textColor="@color/textNormal"
-                android:gravity="right"
-                android:textSize="24sp"
-                android:layout_marginRight="30dp"
-                android:layout_marginTop="5dp"
-                android:layout_marginBottom="5dp"
+
+            <ImageButton
+                android:id="@+id/add_menu_button"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:gravity="center"
+                android:src="@drawable/icon_add_25"
+                android:scaleType="center"
+                android:layout_gravity="center"
+                android:layout_marginRight="60dp"
+                android:background="@drawable/shape_menu_top"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintRight_toRightOf="parent"/>
+                app:layout_constraintRight_toRightOf="parent"
+                android:foreground="?android:selectableItemBackground"/>
+            <com.baokaicong.android.bmusic.ui.view.IconButton
+                android:id="@+id/sync_menu_button"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:gravity="center"
+                android:scaleType="center"
+                app:icon="@drawable/icon_refresh_25"
+                android:layout_gravity="center"
+                android:layout_marginRight="10dp"
+                android:background="@drawable/shape_menu_top"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintRight_toRightOf="parent" />
+<!--            <LinearLayout-->
+<!--                android:id="@+id/sync_menu_button"-->
+<!--                android:layout_width="50dp"-->
+<!--                android:layout_height="50dp"-->
+<!--                android:gravity="center"-->
+<!--                android:layout_marginRight="10dp"-->
+<!--                android:layout_gravity="center"-->
+<!--                android:background="@drawable/shape_menu_top"-->
+<!--                app:layout_constraintBottom_toBottomOf="parent"-->
+<!--                app:layout_constraintTop_toTopOf="parent"-->
+<!--                app:layout_constraintRight_toRightOf="parent"-->
+<!--                android:foreground="?android:selectableItemBackground">-->
+<!--                <ImageButton-->
+<!--                    android:id="@+id/icon"-->
+<!--                    android:layout_width="25dp"-->
+<!--                    android:layout_height="25dp"-->
+<!--                    android:src="@drawable/icon_refresh_25"-->
+<!--                    android:scaleType="center"-->
+<!--                    android:background="@android:color/transparent"/>-->
+<!--            </LinearLayout>-->
         </androidx.constraintlayout.widget.ConstraintLayout>
         <ListView
             android:id="@+id/music_menu_list"
@@ -141,8 +226,7 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:orientation="vertical"
-            android:divider="#00000000"
-            android:dividerHeight="10dp"/>
+            android:divider="#00000000" />
     </LinearLayout>
 </LinearLayout>
 

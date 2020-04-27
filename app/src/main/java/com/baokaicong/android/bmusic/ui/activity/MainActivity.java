@@ -23,18 +23,24 @@ import android.view.View;
 import com.baokaicong.android.bmusic.BMContext;
 import com.baokaicong.android.bmusic.R;
 import com.baokaicong.android.bmusic.bean.Music;
-import com.baokaicong.android.bmusic.bean.MusicMenu;
 import com.baokaicong.android.bmusic.bean.MusicURL;
-import com.baokaicong.android.bmusic.engine.PermissionEngine;
+import com.baokaicong.android.bmusic.service.UserService;
+import com.baokaicong.android.bmusic.service.binder.CustomBinder;
+import com.baokaicong.android.bmusic.service.remoter.command.LoadListCommand;
+import com.baokaicong.android.bmusic.service.remoter.command.NextCommand;
+import com.baokaicong.android.bmusic.service.remoter.command.OpenCommand;
+import com.baokaicong.android.bmusic.service.remoter.command.PauseCommand;
+import com.baokaicong.android.bmusic.service.remoter.command.PlayCommand;
+import com.baokaicong.android.bmusic.service.remoter.command.ShutdownCommand;
+import com.baokaicong.android.bmusic.util.PermissionUtil;
 import com.baokaicong.android.bmusic.service.MusicPlayService;
 import com.baokaicong.android.bmusic.service.remoter.MediaRemoter;
-import com.baokaicong.android.bmusic.service.remoter.MusicRemoter;
 import com.baokaicong.android.bmusic.ui.fragment.BFragment;
 import com.baokaicong.android.bmusic.ui.fragment.HomeFragment;
 import com.baokaicong.android.bmusic.ui.fragment.NewsFragment;
 import com.baokaicong.android.bmusic.ui.view.BottomMusicView;
 import com.baokaicong.android.bmusic.ui.view.MainToolbar;
-import com.baokaicong.android.bmusic.util.ToastHelper;
+import com.baokaicong.android.bmusic.util.ToastUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -51,19 +57,20 @@ public class MainActivity extends AppCompatActivity {
     private BottomMusicView bottomMusicView;
     private MediaRemoter mediaRemoter;
     private Map<String,Integer> navMap;
-    private ServiceConnection serviceConnection;
-
+    private ServiceConnection musicPlayCon;
+    private ServiceConnection userCon;
+    private UserService userService;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        BMContext.builder().addActivity(NAME,this);
+        BMContext.instance().addActivity(NAME,this);
         String[] str={
                 Manifest.permission.READ_EXTERNAL_STORAGE,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
                 Manifest.permission.INTERNET
         };
-        PermissionEngine.Instance()
+        PermissionUtil.Instance()
                 .request(this,str);
         init();
     }
@@ -72,7 +79,6 @@ public class MainActivity extends AppCompatActivity {
         navMap=new HashMap<>();
         navMap.put("首页",R.id.fragment_home);
         navMap.put("动态",R.id.fragment_news);
-
         toolbar=findViewById(R.id.main_toolbar);
         toolbar.addListener(new MainToolbar.MainToolbarListener() {
             @Override
@@ -85,13 +91,14 @@ public class MainActivity extends AppCompatActivity {
                 switchFragment(navMap.get(last),navMap.get(target));
             }
         });
-        serviceConnection=new ServiceConnection() {
+
+        // 播放服务
+        musicPlayCon=new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
                 mediaRemoter=((MusicPlayService.MusicBinder)service).getRemoter();
-
-                mediaRemoter.load(musicList());
-                Log.i("主线程","获取遥控器");
+                mediaRemoter.command(new OpenCommand(),null);
+                mediaRemoter.command(new LoadListCommand(),musicList());
             }
 
             @Override
@@ -99,22 +106,22 @@ public class MainActivity extends AppCompatActivity {
                 Log.i("音乐服务","销毁");
             }
         };
-        bottomMusicView=findViewById(R.id.bottom_music_view);
         Intent intent=new Intent(this,MusicPlayService.class);
-        bindService(intent, serviceConnection,BIND_AUTO_CREATE);
+        bindService(intent, musicPlayCon,BIND_AUTO_CREATE);
+
+        bottomMusicView=findViewById(R.id.bottom_music_view);
         bottomMusicView.addBottomMusciListener(new BottomMusicView.BottomMusicListener() {
             @Override
             public void onPlay() {
                 if(mediaRemoter!=null){
-                    mediaRemoter.play();
+                    mediaRemoter.command(new PlayCommand(),null);
                 }
-
             }
 
             @Override
             public void onPause() {
                 if(mediaRemoter!=null){
-                    mediaRemoter.pause();
+                    mediaRemoter.command(new PauseCommand(),null);
                 }
 
             }
@@ -127,13 +134,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onSwitch(String name) {
                 if(mediaRemoter!=null){
-                    mediaRemoter.next();
+                    mediaRemoter.command(new NextCommand(),null);
                 }
             }
         });
         initFragment();
         initActionBarAndDrawer();
     }
+
 
     private List<Music> musicList(){
         List<Music> list=new ArrayList<>();
@@ -209,12 +217,8 @@ public class MainActivity extends AppCompatActivity {
             if (!closeDrawer()) {
                 // 设置两秒内连续两次back则退出
                 if ((System.currentTimeMillis() - DOUBLE_CLICK_TIME) > 2000) {
-                    ToastHelper.showText(MainActivity.this, "再按一次退出");
                     DOUBLE_CLICK_TIME = System.currentTimeMillis();
                 } else {
-//                    BMContext.builder().removeActivity(NAME);
-//                    BMContext.builder().finishAllActivity();
-//                    finish();
                     moveTaskToBack(true);
                     return true;
                 }
@@ -273,27 +277,16 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
-    // 服务是否运行
-    public boolean isServiceRunning(String name) {
-        boolean isRunning = false;
-        ActivityManager am = (ActivityManager) this
-                .getSystemService(Context.ACTIVITY_SERVICE);
-        List<ActivityManager.RunningAppProcessInfo> lists = am.getRunningAppProcesses();
-
-
-        for (ActivityManager.RunningAppProcessInfo info : lists) {// 获取运行服务再启动
-            System.out.println(info.processName);
-            if (info.processName.equals(name)) {
-                isRunning = true;
-            }
-        }
-        return isRunning;
-
-    }
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        Log.i("主线程","销毁");
+        if(musicPlayCon!=null){
+            unbindService(musicPlayCon);
+        }
+        if(userCon!=null){
+            unbindService(userCon);
+        }
+        mediaRemoter.command(new ShutdownCommand(),null);
+        mediaRemoter=null;
     }
 }

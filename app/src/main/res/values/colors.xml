@@ -6,6 +6,10 @@
     <color name="colorAccent">#B60202</color>
     <color name="toolbarTextNormal">#BEBEBE</color>
     <color name="toolbarTextAccent">#ffffff</color>
-    <color name="textNormal">#B3AEAE</color>
-    <color name="textAccent">#E4DDDD</color>
+    <color name="textWhiteNormal">#B3AEAE</color>
+    <color name="textWhiteAccent">#E4DDDD</color>
+    <color name="textBlackNormal">#626262</color>
+    <color name="textBlackAccent">#343434</color>
+    <color name="grayLight">#d3d3d3</color>
+    <color name="whiteBg">#F9F9F9</color>
 </resources>

@@ -5,8 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
 
-import com.baokaicong.basedialog.R;
-
+import com.baokaicong.android.cdialog.R;
 
 public class LoadingFooter {
 

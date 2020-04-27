@@ -1,24 +1,24 @@
-package com.baokaicong.android.bmusic.engine;
+package com.baokaicong.android.bmusic.util;
 
 import android.content.Context;
 
 import com.yanzhenjie.permission.AndPermission;
 
 
-public class PermissionEngine {
+public class PermissionUtil {
 
-    private PermissionEngine(){
+    private PermissionUtil(){
 
     }
     private static class Holder{
-        private static PermissionEngine instance=new PermissionEngine();
+        private static PermissionUtil instance=new PermissionUtil();
     }
 
-    public static PermissionEngine Instance(){
+    public static PermissionUtil Instance(){
         return Holder.instance;
     }
 
-    public PermissionEngine request(Context context,String... permission){
+    public PermissionUtil request(Context context, String... permission){
         AndPermission.with(context)
                 .runtime()
                 .permission(permission)

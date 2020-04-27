@@ -3,7 +3,7 @@ package com.baokaicong.android.bmusic.util;
 import android.content.Context;
 import android.widget.Toast;
 
-public class ToastHelper {
+public class ToastUtil {
 
 
     public static void showText(Context context,String text){

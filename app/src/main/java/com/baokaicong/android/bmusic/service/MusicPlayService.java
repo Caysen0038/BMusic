@@ -6,9 +6,6 @@ import android.content.ServiceConnection;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
-import android.os.IInterface;
-import android.os.Parcel;
-import android.os.RemoteException;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -32,103 +29,119 @@ public class MusicPlayService extends Service implements RemoteReceiver<Music> {
 
     private MusicPlayManager musicManager;
 
-    private Thread lifeThread;
-
-    private boolean protecting=false;
+    private boolean mediaRunning=false;
 
     private boolean autoPlay=false;
 
     private MediaRemoter remoter;
+    private ServiceMusicPlayerListener musicPlayerListener;
 
     @Override
     public void onCreate() {
         super.onCreate();
-        musicPlayer=HTTPMusicPlayer.instance();
         remoter=new MusicRemoter(this);
-        musicManager=new MusicPlayManager();
-        //MusicRemoter.instance().addMedia(this);
-        musicPlayer.addMusicPlayerListner(new ServiceMusicPlayerListener());
-        Log.i("service","初始化");
+        musicPlayerListener=new ServiceMusicPlayerListener();
     }
 
 
     @Override
     public IBinder onBind(Intent intent) {
-
         MusicBinder musicBinder=new MusicBinder(this.remoter);
-        Log.i("service","绑定");
         return musicBinder;
     }
 
     @Override
     public void unbindService(ServiceConnection conn) {
         super.unbindService(conn);
-        Log.i("service","解绑");
     }
 
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.i("service","执行命令");
         return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
+    public void open() {
+        musicPlayer=HTTPMusicPlayer.instance();
+        musicManager=new MusicPlayManager();
+        musicPlayer.addMusicPlayerListner(this.musicPlayerListener);
+        mediaRunning=true;
+    }
+
+    @Override
+    public void shutdown() {
+        mediaRunning=false;
+        musicPlayer.removeMusicPlayerListner(this.musicPlayerListener);
+        musicPlayer.release();
+
+    }
+
+    @Override
     public void load(List<Music> music) {
-        //musicPlayer.loadMedia(music,loop);
+        if(!mediaRunning)
+            return;
         musicManager.loadList(music);
-        Log.i("service","加载列表");
     }
 
     @Override
     public void add(Music m, int i) {
+        if(!mediaRunning)
+            return;
         if(i<0){
             musicManager.insertMusic(m);
         }else{
             musicManager.insertMusic(m,i);
         }
-        Log.i("service","添加");
     }
 
     @Override
     public void play() {
+        Log.i("音乐服务","播放");
+        if(!mediaRunning)
+            return;
         if(musicPlayer.isPlaying()){
             musicPlayer.play();
+
         }else{
             Music m=musicManager.getCurrentMusic();
             loadMusic(m,true);
         }
-        Log.i("service","播放");
+        Log.i("音乐服务","播放成功");
     }
 
     @Override
     public void pause() {
+        if(!mediaRunning)
+            return;
         musicPlayer.pause();
-        Log.i("service","暂停");
     }
 
     @Override
     public void next() {
+        if(!mediaRunning)
+            return;
         Music m=musicManager.getNextMusic();
         loadMusic(m,true);
-        Log.i("service","下一首");
     }
 
     @Override
     public void pre() {
+        if(!mediaRunning)
+            return;
         Music m=musicManager.getPreMusic();
         loadMusic(m,true);
-        Log.i("service","上一首");
     }
 
 
     @Override
     public void jump(int rate) {
+        if(!mediaRunning)
+            return;
         musicPlayer.jump(rate);
     }
 
     private void loadMusic(Music m,boolean auto){
-
         autoPlay=auto;
         musicPlayer.loadMedia(m,false);
     }
@@ -137,8 +150,10 @@ public class MusicPlayService extends Service implements RemoteReceiver<Music> {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.i("service","销毁");
-        this.musicPlayer.release();
+        if(mediaRunning){
+            this.shutdown();
+        }
+
     }
     int n=0;
     /**

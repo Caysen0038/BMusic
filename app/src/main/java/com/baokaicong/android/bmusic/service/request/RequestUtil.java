@@ -1,31 +1,38 @@
-package com.baokaicong.android.bmusic.engine;
+package com.baokaicong.android.bmusic.service.request;
 
+import android.util.Log;
+
+import java.util.concurrent.TimeUnit;
+
+import okhttp3.OkHttpClient;
 import retrofit2.CallAdapter;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class RequestEngine {
-    private static final String baseURL="http://gateway.baokaicong.com:1102";
+public class RequestUtil {
+    private static final String baseURL="http://192.168.0.106:1102/";
     private GsonConverterFactory gsonConverterFactory;
     private CallAdapter.Factory callAdapterFactory;
-    private RequestEngine(){}
+    private OkHttpClient client;
+    private RequestUtil(){}
 
     public void init(){
         buildGsonConverterFactory();
         buildCallAdapterFactory();
+        buildOkHttpClient();
     }
 
 
     private static class Holder{
-        private static RequestEngine instance=new RequestEngine(){
+        private static RequestUtil instance=new RequestUtil(){
             {
                 init();
             }
         };
     }
 
-    public static RequestEngine Instance(){
+    public static RequestUtil Instance(){
         return Holder.instance;
     }
 
@@ -34,8 +41,10 @@ public class RequestEngine {
     }
 
     public <T> T buildeRequestAPI(String url, Class<T> apiClazz){
+
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(url)
+                .client(client)
                 .addConverterFactory(gsonConverterFactory) //设置数据解析器
                 .addCallAdapterFactory(callAdapterFactory)
                 .build();
@@ -52,5 +61,13 @@ public class RequestEngine {
 
     private void buildCallAdapterFactory(){
         this.callAdapterFactory=RxJavaCallAdapterFactory.create();
+    }
+
+    private void buildOkHttpClient(){
+        client=new OkHttpClient.Builder()
+                .readTimeout(3, TimeUnit.MINUTES)
+                .connectTimeout(3, TimeUnit.MINUTES)
+                .writeTimeout(3, TimeUnit.MINUTES) //设置超时
+                .build();
     }
 }

@@ -6,9 +6,10 @@
     android:layout_height="70dp"
     >
     <LinearLayout
+        android:id="@+id/music_control"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:background="@color/colorPrimaryLight"
+        android:background="@drawable/shape_bottom_control"
         android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -30,7 +31,7 @@
                 android:layout_height="22dp"
                 android:singleLine="true"
                 android:text="unlasting(刀剑神域爱丽丝主题曲)"
-                android:textColor="#E0E0E0"
+                android:textColor="@color/textBlackNormal"
                 android:textSize="14sp"
                 android:gravity="center_vertical"
                 />
@@ -40,7 +41,7 @@
                 android:layout_height="22dp"
                 android:singleLine="true"
                 android:text="Lisa"
-                android:textColor="#E0E0E0"
+                android:textColor="@color/textBlackNormal"
                 android:textSize="14sp"
                 android:gravity="center_vertical"
                 />
@@ -60,6 +61,22 @@
             android:background="@android:color/transparent"
             />
     </LinearLayout>
+    <SeekBar
+        android:id="@+id/progress_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="100"
+        android:progress="100"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="55dp"
+        android:paddingStart="0dp"
+        android:paddingEnd="0dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:thumbOffset="0dp"
+        android:maxHeight="3dp"
+        />
     <View
         android:id="@+id/bottom_disc"
         android:layout_width="70dp"

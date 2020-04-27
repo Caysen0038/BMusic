@@ -25,6 +25,22 @@
                 <action android:name="com.baokaicong.android.bmusic.service.MusciPlayService" />
             </intent-filter>
         </service>
+        <service
+            android:name=".service.UserService"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.baokaicong.android.bmusic.service.UserService" />
+            </intent-filter>
+        </service>
+        <service
+            android:name=".service.MusicMenuService"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.baokaicong.android.bmusic.service.MusicMenuService" />
+            </intent-filter>
+        </service>
 
         <activity
             android:name=".ui.activity.BootSplashActivity"
@@ -41,6 +57,21 @@
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.HOME" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".ui.activity.LoginActivity">
+            <intent-filter>
+                <action android:name="com.baokaicong.android.music.action.LOGIN" />
+
+                <category android:name="com.baokaicong.android.music.category.LOGIN" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".ui.activity.setting.NetSettingActivity">
+            <intent-filter>
+                <action android:name="com.baokaicong.android.music.action.NET" />
+
+                <category android:name="com.baokaicong.android.music.category.NET" />
             </intent-filter>
         </activity>
     </application>

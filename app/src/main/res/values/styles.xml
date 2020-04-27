@@ -17,4 +17,5 @@
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowBackground">@drawable/bg_bm_1280</item>
     </style>
+
 </resources>
