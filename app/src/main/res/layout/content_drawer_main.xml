@@ -1,42 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <LinearLayout
-        android:id="@+id/home_nav_top"
+        android:id="@+id/drawer_nav_top"
         android:layout_width="match_parent"
         android:layout_height="120dp"
         android:layout_alignParentTop="true"
-        android:background="@android:color/darker_gray"
+        android:background="@color/colorPrimary"
         android:gravity="center"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
             android:layout_width="60dp"
             android:layout_height="60dp"
             android:layout_gravity="center"
             android:scaleType="fitXY"
-            android:src="@drawable/icon_bkc_trans_30" />
+            android:src="@drawable/icon_user_50" />
     </LinearLayout>
-
-    <ListView
-        android:id="@+id/home_nav_list"
-        android:layout_below="@id/home_nav_top"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:divider="@null"
-        android:text="DrawerLayout" />
+        app:layout_constraintTop_toBottomOf="@id/drawer_nav_top"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        android:orientation="vertical"
+        >
+        <ListView
+            android:id="@+id/drawer_nav_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:divider="@null"
+            />
+    </LinearLayout>
 
-    <ImageView
-        android:id="@+id/open_setting_button"
-        android:layout_width="45dp"
-        android:layout_height="45dp"
-        android:scaleType="center"
-        android:onClick="openSetting"
-        android:src="@drawable/icon_bkc_trans_30"
-        android:layout_alignParentBottom="true"
-        android:layout_marginLeft="10dp"
-        android:layout_marginBottom="15dp"
-        android:foreground="?android:attr/selectableItemBackground"
+    <Button
+        android:id="@+id/drawer_quit_button"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="退出账户"
+        android:background="@android:color/transparent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        android:foreground="?android:selectableItemBackground"
         />
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

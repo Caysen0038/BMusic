@@ -19,11 +19,18 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ListAdapter;
+import android.widget.ListView;
+import android.widget.SimpleAdapter;
 
 import com.baokaicong.android.bmusic.BMContext;
 import com.baokaicong.android.bmusic.R;
 import com.baokaicong.android.bmusic.bean.Music;
 import com.baokaicong.android.bmusic.bean.MusicURL;
+import com.baokaicong.android.bmusic.consts.SettingField;
 import com.baokaicong.android.bmusic.service.UserService;
 import com.baokaicong.android.bmusic.service.binder.CustomBinder;
 import com.baokaicong.android.bmusic.service.remoter.command.LoadListCommand;
@@ -32,6 +39,7 @@ import com.baokaicong.android.bmusic.service.remoter.command.OpenCommand;
 import com.baokaicong.android.bmusic.service.remoter.command.PauseCommand;
 import com.baokaicong.android.bmusic.service.remoter.command.PlayCommand;
 import com.baokaicong.android.bmusic.service.remoter.command.ShutdownCommand;
+import com.baokaicong.android.bmusic.util.BEAUtil;
 import com.baokaicong.android.bmusic.util.PermissionUtil;
 import com.baokaicong.android.bmusic.service.MusicPlayService;
 import com.baokaicong.android.bmusic.service.remoter.MediaRemoter;
@@ -41,6 +49,7 @@ import com.baokaicong.android.bmusic.ui.fragment.NewsFragment;
 import com.baokaicong.android.bmusic.ui.view.BottomMusicView;
 import com.baokaicong.android.bmusic.ui.view.MainToolbar;
 import com.baokaicong.android.bmusic.util.ToastUtil;
+import com.baokaicong.android.bmusic.util.sql.SettingSQLUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -60,6 +69,10 @@ public class MainActivity extends AppCompatActivity {
     private ServiceConnection musicPlayCon;
     private ServiceConnection userCon;
     private UserService userService;
+    private Button logoutButton;
+    private SettingSQLUtil settingSQLUtil;
+    private ImageButton searchButton;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,6 +85,7 @@ public class MainActivity extends AppCompatActivity {
         };
         PermissionUtil.Instance()
                 .request(this,str);
+        settingSQLUtil=new SettingSQLUtil(this);
         init();
     }
 
@@ -92,13 +106,22 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        logoutButton=findViewById(R.id.drawer_quit_button);
+        logoutButton.setOnClickListener((v)->{logout();});
+
+        searchButton=findViewById(R.id.search);
+        searchButton.setOnClickListener((v)->{
+            Intent intent=new Intent(MainActivity.this,SearchActivity.class);
+            startActivity(intent);
+        });
         // 播放服务
         musicPlayCon=new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
                 mediaRemoter=((MusicPlayService.MusicBinder)service).getRemoter();
                 mediaRemoter.command(new OpenCommand(),null);
-                mediaRemoter.command(new LoadListCommand(),musicList());
+                BMContext.instance().setRemoter(mediaRemoter);
+
             }
 
             @Override
@@ -132,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onSwitch(String name) {
+            public void onSwitch(Music music) {
                 if(mediaRemoter!=null){
                     mediaRemoter.command(new NextCommand(),null);
                 }
@@ -140,25 +163,20 @@ public class MainActivity extends AppCompatActivity {
         });
         initFragment();
         initActionBarAndDrawer();
+        initDrawerView();
     }
 
-
-    private List<Music> musicList(){
-        List<Music> list=new ArrayList<>();
-        for(String url: MusicURL.urls){
-            Music m=new Music()
-                    .setUrl(url);
-            list.add(m);
-        }
-        return list;
+    private void initDrawerView(){
+        String[] names={"我的信息","设置","网络"};
+        ListView list=findViewById(R.id.drawer_nav_list);
+        ListAdapter adapter=new ArrayAdapter<>(this,android.R.layout.simple_list_item_1,names);
+        list.setAdapter(adapter);
     }
-
 
     /**
      * 初始化Fragment
      */
     private void initFragment() {
-
         fragmentMap = new HashMap<>();
         fragmentMap.put(R.id.fragment_home, new HomeFragment());
         fragmentMap.put(R.id.fragment_news, new NewsFragment());
@@ -179,6 +197,13 @@ public class MainActivity extends AppCompatActivity {
         drawerLayout.addDrawerListener(barDrawerToggle);
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+//        for(BFragment f:fragmentMap.values()){
+//            f.resume();
+//        }
+    }
 
     /**
      * 切换Fragment
@@ -277,6 +302,23 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
+    private void logout(){
+        String username=settingSQLUtil.getSetting(SettingField.USER_NAME);
+        String password=settingSQLUtil.getSetting(SettingField.USER_PASSWORD);
+        settingSQLUtil.deleteSetting(SettingField.USER_NAME);
+        settingSQLUtil.deleteSetting(SettingField.USER_PASSWORD);
+        BMContext.instance().setCurrentUser(null);
+        Intent intent=new Intent(this,LoginActivity.class);
+        intent.putExtra(SettingField.USER_NAME,username);
+        if(password!=null && password.length()>0){
+            password= BEAUtil.DBEA(password,username);
+        }
+        intent.putExtra(SettingField.USER_PASSWORD,password);
+        Log.i("注销账户",username+"   "+password);
+        startActivity(intent);
+        this.finish();
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -285,6 +327,9 @@ public class MainActivity extends AppCompatActivity {
         }
         if(userCon!=null){
             unbindService(userCon);
+        }
+        if(settingSQLUtil!=null){
+            settingSQLUtil.close();
         }
         mediaRemoter.command(new ShutdownCommand(),null);
         mediaRemoter=null;

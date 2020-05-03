@@ -5,25 +5,32 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Binder;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.util.Log;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
+import com.baokaicong.android.bmusic.BMContext;
 import com.baokaicong.android.bmusic.bean.Music;
+import com.baokaicong.android.bmusic.bean.MusicList;
+import com.baokaicong.android.bmusic.consts.ListenerTag;
+import com.baokaicong.android.bmusic.service.listener.GlobalMusicPlayListener;
 import com.baokaicong.android.bmusic.service.manager.MusicPlayManager;
-import com.baokaicong.android.bmusic.service.remoter.RemoteReceiver;
+import com.baokaicong.android.bmusic.service.remoter.MediaController;
 import com.baokaicong.android.bmusic.service.player.HTTPMusicPlayer;
 import com.baokaicong.android.bmusic.service.player.MusicPlayer;
 import com.baokaicong.android.bmusic.service.remoter.MusicRemoter;
 import com.baokaicong.android.bmusic.service.remoter.MediaRemoter;
 
-import java.io.FileDescriptor;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
-public class MusicPlayService extends Service implements RemoteReceiver<Music> {
+import lombok.SneakyThrows;
+
+public class MusicPlayService extends Service implements MediaController<Music> {
 
     private MusicPlayer musicPlayer;
 
@@ -33,8 +40,12 @@ public class MusicPlayService extends Service implements RemoteReceiver<Music> {
 
     private boolean autoPlay=false;
 
+    private Timer progressTimer;
+
     private MediaRemoter remoter;
     private ServiceMusicPlayerListener musicPlayerListener;
+    private boolean wathcing=false;
+
 
     @Override
     public void onCreate() {
@@ -67,6 +78,7 @@ public class MusicPlayService extends Service implements RemoteReceiver<Music> {
         musicManager=new MusicPlayManager();
         musicPlayer.addMusicPlayerListner(this.musicPlayerListener);
         mediaRunning=true;
+        watchProgress();
     }
 
     @Override
@@ -74,14 +86,14 @@ public class MusicPlayService extends Service implements RemoteReceiver<Music> {
         mediaRunning=false;
         musicPlayer.removeMusicPlayerListner(this.musicPlayerListener);
         musicPlayer.release();
-
+        progressTimer.cancel();
     }
 
     @Override
-    public void load(List<Music> music) {
+    public void load(MusicList list) {
         if(!mediaRunning)
             return;
-        musicManager.loadList(music);
+        musicManager.loadList(list);
     }
 
     @Override
@@ -97,17 +109,43 @@ public class MusicPlayService extends Service implements RemoteReceiver<Music> {
 
     @Override
     public void play() {
-        Log.i("音乐服务","播放");
         if(!mediaRunning)
             return;
-        if(musicPlayer.isPlaying()){
+        if(musicPlayer.isLoaded()){
             musicPlayer.play();
-
         }else{
             Music m=musicManager.getCurrentMusic();
+            if(m!=null){
+
+                loadMusic(m,true);
+            }
+        }
+    }
+
+    @Override
+    public void play(int i) {
+        if(!mediaRunning){
+            return;
+        }
+
+        Music m=musicManager.getMusic(i);
+        if(m!=null && !m.equals(BMContext.instance().getPlayInfo().getCurrentMusic())){
             loadMusic(m,true);
         }
-        Log.i("音乐服务","播放成功");
+
+    }
+
+    @Override
+    public void play(Music music) {
+        if(!mediaRunning){
+            return;
+        }
+        musicManager.insertMusic(music,0);
+        Music m=musicManager.getMusic(0);
+        if(m!=null && !m.equals(BMContext.instance().getPlayInfo().getCurrentMusic())){
+            loadMusic(m,true);
+        }
+
     }
 
     @Override
@@ -122,7 +160,11 @@ public class MusicPlayService extends Service implements RemoteReceiver<Music> {
         if(!mediaRunning)
             return;
         Music m=musicManager.getNextMusic();
-        loadMusic(m,true);
+        if(m!=null){
+
+            loadMusic(m,true);
+        }
+
     }
 
     @Override
@@ -130,7 +172,10 @@ public class MusicPlayService extends Service implements RemoteReceiver<Music> {
         if(!mediaRunning)
             return;
         Music m=musicManager.getPreMusic();
-        loadMusic(m,true);
+        if(m!=null){
+
+            loadMusic(m,true);
+        }
     }
 
 
@@ -138,13 +183,30 @@ public class MusicPlayService extends Service implements RemoteReceiver<Music> {
     public void jump(int rate) {
         if(!mediaRunning)
             return;
-        musicPlayer.jump(rate);
+        musicPlayer.jump(rate*1000);
     }
 
     private void loadMusic(Music m,boolean auto){
         autoPlay=auto;
         musicPlayer.loadMedia(m,false);
     }
+
+    /**
+     * 实时观察播放进度
+     */
+    private void watchProgress(){
+        progressTimer=new Timer();
+        progressTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                if(wathcing) {
+                    int n=musicPlayer.getProgress();
+                    notifyProgress(n/1000);
+                }
+            }
+        },0,1000);
+    }
+
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
@@ -155,7 +217,7 @@ public class MusicPlayService extends Service implements RemoteReceiver<Music> {
         }
 
     }
-    int n=0;
+
     /**
      * 播放器监听器
      */
@@ -163,6 +225,9 @@ public class MusicPlayService extends Service implements RemoteReceiver<Music> {
 
         @Override
         public void onLoadComplete() {
+            notifySwitch(musicManager.getCurrentMusic());
+            BMContext.instance().getPlayInfo().setCurrentMusic(musicManager.getCurrentMusic());
+            wathcing=true;
             if(autoPlay){
                 musicPlayer.play();
             }
@@ -170,28 +235,31 @@ public class MusicPlayService extends Service implements RemoteReceiver<Music> {
 
         @Override
         public void onPlay() {
-
+            notifyPlay(musicPlayer.getMedia());
         }
 
         @Override
         public void onPause() {
-
+            notifyPause(musicPlayer.getMedia());
         }
 
         @Override
         public void onPlayComplete() {
+            wathcing=false;
             next();
         }
 
         @Override
         public void onRelease() {
+            wathcing=false;
 
         }
 
         @Override
         public void onError() {
-
+            wathcing=false;
         }
+
     }
 
     public static class MusicBinder extends Binder {
@@ -207,4 +275,42 @@ public class MusicPlayService extends Service implements RemoteReceiver<Music> {
 
     }
 
+    private void notifyPlay(Music music){
+        BMContext.instance().getPlayInfo().setPlaying(true);
+        List<GlobalMusicPlayListener> list=BMContext.instance().getListenerList(ListenerTag.MUSIC);
+        synchronized (list){
+            for(GlobalMusicPlayListener listener:list){
+                listener.onPlay(music);
+            }
+        }
+    }
+
+    private void notifyPause(Music music){
+        BMContext.instance().getPlayInfo().setPlaying(false);
+        List<GlobalMusicPlayListener> list=BMContext.instance().getListenerList(ListenerTag.MUSIC);
+        synchronized (list){
+            for(GlobalMusicPlayListener listener:list){
+                listener.onPause(music);
+            }
+        }
+    }
+
+    private void notifyProgress(int p){
+        BMContext.instance().getPlayInfo().setProgress(p);
+        List<GlobalMusicPlayListener> list=BMContext.instance().getListenerList(ListenerTag.MUSIC);
+        synchronized (list){
+            for(GlobalMusicPlayListener listener:list){
+                listener.progress(p);
+            }
+        }
+    }
+
+    private void notifySwitch(Music music){
+        List<GlobalMusicPlayListener> list=BMContext.instance().getListenerList(ListenerTag.MUSIC);
+        synchronized (list){
+            for(GlobalMusicPlayListener listener:list){
+                listener.onSwitch(music);
+            }
+        }
+    }
 }

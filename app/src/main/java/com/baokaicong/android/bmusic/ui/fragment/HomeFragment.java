@@ -1,7 +1,6 @@
 package com.baokaicong.android.bmusic.ui.fragment;
 
 import android.animation.ObjectAnimator;
-import android.animation.ValueAnimator;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.ServiceConnection;
@@ -9,17 +8,13 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 
 import androidx.annotation.RequiresApi;
@@ -29,16 +24,19 @@ import com.baokaicong.android.bmusic.BMContext;
 import com.baokaicong.android.bmusic.R;
 import com.baokaicong.android.bmusic.bean.MusicMenu;
 import com.baokaicong.android.bmusic.bean.Result;
+import com.baokaicong.android.bmusic.service.MenuService;
 import com.baokaicong.android.bmusic.service.binder.CustomBinder;
-import com.baokaicong.android.bmusic.service.MusicMenuService;
 import com.baokaicong.android.bmusic.service.request.RequestCallback;
-import com.baokaicong.android.bmusic.ui.adapter.MusicMenuListAdapter;
+import com.baokaicong.android.bmusic.ui.activity.MenuMusicsActivity;
+import com.baokaicong.android.bmusic.ui.adapter.MenuListAdapter;
 import com.baokaicong.android.bmusic.ui.view.IconButton;
 import com.baokaicong.android.bmusic.util.sql.MusicMenuSQLUtil;
 import com.baokaicong.android.bmusic.util.ToastUtil;
 import com.baokaicong.android.cdialog.consts.SheetItemColor;
 import com.baokaicong.android.cdialog.widget.dialog.bDialog.BActionSheetDialog;
+import com.baokaicong.android.cdialog.widget.dialog.bDialog.BAlertDialog;
 import com.baokaicong.android.cdialog.widget.dialog.bDialog.BAlertInputDialog;
+import com.google.gson.Gson;
 
 import android.content.Intent;
 import android.widget.TextView;
@@ -53,8 +51,8 @@ public class HomeFragment extends BFragment {
     private Handler handler;
     private MusicMenuSQLUtil musicMenuSQLUtil;
     private ServiceConnection musicMenuCon;
-    private MusicMenuService musicMenuService;
-    private MusicMenuListAdapter menuAdapter;
+    private MenuService menuService;
+    private MenuListAdapter menuAdapter;
     private TextView usernameText;
     private TextView userDescText;
     private ImageView userImage;
@@ -71,15 +69,14 @@ public class HomeFragment extends BFragment {
         musicMenuCon=new ServiceConnection(){
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
-                musicMenuService=((CustomBinder)service).getService();
+                menuService =((CustomBinder)service).getService();
                 refreshContent();
             }
             @Override
             public void onServiceDisconnected(ComponentName name) {
-
             }
         };
-        Intent intent=new Intent(getContext(),MusicMenuService.class);
+        Intent intent=new Intent(getContext(), MenuService.class);
         getContext().bindService(intent,musicMenuCon, Context.BIND_AUTO_CREATE);
     }
 
@@ -91,17 +88,15 @@ public class HomeFragment extends BFragment {
         usernameText=root.findViewById(R.id.user_name);
         userDescText=root.findViewById(R.id.user_desc);
         userImage=root.findViewById(R.id.user_img);
-        usernameText.setText(BMContext.instance().getUser().getUserInfo().getName());
         initSwipeRefreshLayout();
         initMusicMenuView();
-
         return root;
     }
 
     @Override
     public void onResume() {
         super.onResume();
-
+        resume();
     }
 
     /**
@@ -116,7 +111,6 @@ public class HomeFragment extends BFragment {
             @Override
             public void onRefresh() {
                 refreshContent();
-
             }
         });
 
@@ -163,7 +157,10 @@ public class HomeFragment extends BFragment {
 
     @Override
     public void resume() {
-
+        usernameText.setText(BMContext.instance().getUser().getUserInfo().getName());
+//        if(menuService!=null){
+//            refreshContent();
+//        }
     }
 
     @Override
@@ -175,7 +172,6 @@ public class HomeFragment extends BFragment {
      * 刷新内容
      */
     private void refreshContent(){
-
         List<MusicMenu> list=musicMenuSQLUtil.listOwnerMenu(BMContext.instance().getUser().getUserInfo().getAccountId());
         loadMusicMenu(list);
         refreshFinished();
@@ -202,7 +198,7 @@ public class HomeFragment extends BFragment {
         ObjectAnimator animator=ObjectAnimator.ofFloat(syncMenuButton.findViewById(R.id.icon),"rotation",0,360*3);
         animator.setDuration(1400);
         animator.start();
-        musicMenuService.syncMenus(BMContext.instance().getUser().getToken(), new RequestCallback<List<MusicMenu>>() {
+        menuService.syncMenus(BMContext.instance().getUser().getToken(), new RequestCallback<List<MusicMenu>>() {
             @Override
             public void handleResult(Result<List<MusicMenu>> result) {
                 //
@@ -237,7 +233,7 @@ public class HomeFragment extends BFragment {
         for(MusicMenu m:list){
             menu[i++]=m;
         }
-        this.menuAdapter=new MusicMenuListAdapter(getContext(), menu);
+        this.menuAdapter=new MenuListAdapter(getContext(), menu);
         menuList.setAdapter(menuAdapter);
     }
 
@@ -246,7 +242,10 @@ public class HomeFragment extends BFragment {
      * @param p
      */
     private void menuItemClick(int p){
-
+        MusicMenu menu= (MusicMenu) menuAdapter.getItem(p);
+        Intent intent=new Intent(getContext(), MenuMusicsActivity.class);
+        intent.putExtra("menu",new Gson().toJson(menu));
+        startActivity(intent);
     }
 
     /**
@@ -268,11 +267,48 @@ public class HomeFragment extends BFragment {
     }
 
     private void renameMenu(MusicMenu menu){
+        final BAlertInputDialog inputDialog= new BAlertInputDialog(getContext()).builder()
+                .setTitle("歌单名称")
+                .setEditHint("请输入歌单名");
+        inputDialog.setNegativeButton("取消", (v)-> { inputDialog.dismiss(); })
+                .setPositiveButton("确认", (v)-> {
+                    inputDialog.dismiss();
+                    menuService.renameMenu(BMContext.instance().getUser().getToken(),
+                            menu.getMeid(), inputDialog.getResult(), new RequestCallback<Boolean>() {
+                                @Override
+                                public void handleResult(Result<Boolean> result) {
+                                    refreshContent();
+                                }
 
+                                @Override
+                                public void handleError(Throwable t) {
+                                    ToastUtil.showText(getContext(),"网络貌似不通畅~~");
+                                }
+                            });
+                });
+        inputDialog.show();
     }
 
     private void deleteMenu(MusicMenu menu){
+        BAlertDialog myAlertDialog = new BAlertDialog(getContext()).builder()
+                .setTitle("确认删除该歌单吗？")
+                .setMsg("删除"+menu.getName())
+                .setPositiveButton("确认", (v)-> {
+                    menuService.dropMenu(BMContext.instance().getUser().getToken(),
+                            menu.getMeid(), new RequestCallback<Boolean>() {
+                                @Override
+                                public void handleResult(Result<Boolean> result) {
+                                    refreshContent();
+                                }
 
+                                @Override
+                                public void handleError(Throwable t) {
+                                    ToastUtil.showText(getContext(),"网络貌似不通畅~~");
+                                }
+                            });
+                })
+                .setNegativeButton("取消",(v) ->{ return; });
+        myAlertDialog.show();
     }
 
     private void createMenu(){
@@ -283,7 +319,18 @@ public class HomeFragment extends BFragment {
         inputDialog.setNegativeButton("取消", (v)-> { inputDialog.dismiss(); })
                 .setPositiveButton("确认", (v)-> {
                     inputDialog.dismiss();
-                    ToastUtil.showText(getContext(),inputDialog.getResult());
+                    menuService.createMenu(BMContext.instance().getUser().getToken(),
+                            inputDialog.getResult(), new RequestCallback<Boolean>() {
+                                @Override
+                                public void handleResult(Result<Boolean> result) {
+                                    syncMenu();
+                                }
+
+                                @Override
+                                public void handleError(Throwable t) {
+                                    ToastUtil.showText(getContext(),"网络貌似不通畅~~");
+                                }
+                            });
                 });
         inputDialog.show();
     }
@@ -296,4 +343,11 @@ public class HomeFragment extends BFragment {
 
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if(menuService !=null){
+            getContext().unbindService(musicMenuCon);
+        }
+    }
 }

@@ -35,7 +35,7 @@ public class MusicMenuView extends LinearLayout {
     }
 
     private void initView(){
-        LayoutInflater.from(context).inflate(R.layout.item_music_menu,this,true);
+        LayoutInflater.from(context).inflate(R.layout.item_home_menu,this,true);
         name=findViewById(R.id.music_menu_name);
         icon=findViewById(R.id.music_menu_icon);
     }

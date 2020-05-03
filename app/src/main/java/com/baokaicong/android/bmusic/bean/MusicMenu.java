@@ -11,5 +11,5 @@ public class MusicMenu {
     private String name;
     private String owner;
     private String date;
-
+    private int count;
 }

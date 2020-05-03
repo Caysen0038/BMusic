@@ -15,9 +15,11 @@ import com.baokaicong.android.bmusic.R;
 import com.baokaicong.android.bmusic.bean.Result;
 import com.baokaicong.android.bmusic.bean.User;
 import com.baokaicong.android.bmusic.bean.AccountInfo;
+import com.baokaicong.android.bmusic.consts.SettingField;
 import com.baokaicong.android.bmusic.service.UserService;
 import com.baokaicong.android.bmusic.service.binder.CustomBinder;
 import com.baokaicong.android.bmusic.service.request.RequestCallback;
+import com.baokaicong.android.bmusic.util.BEAUtil;
 import com.baokaicong.android.bmusic.util.sql.SettingSQLUtil;
 import com.baokaicong.android.bmusic.util.ToastUtil;
 
@@ -65,11 +67,12 @@ public class BootSplashActivity extends AppCompatActivity {
 
     private void autoLogin(){
         SettingSQLUtil settingSQLUtil=new SettingSQLUtil(this);
-        String name=settingSQLUtil.getSetting("USERNAME");
-        String password=settingSQLUtil.getSetting("USERPASSWORD");
+        String name=settingSQLUtil.getSetting(SettingField.USER_NAME);
+        String password=settingSQLUtil.getSetting(SettingField.USER_PASSWORD);
         if(name==null || name.length()==0 || password==null || password.length()==0){
             turnAcitivty(LoginActivity.class);
         }else{
+            password= BEAUtil.DBEA(password,name);
             loginLocalUser(new User().setName(name).setPassword(password));
         }
         settingSQLUtil.close();

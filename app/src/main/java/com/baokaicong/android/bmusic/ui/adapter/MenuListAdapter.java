@@ -11,15 +11,16 @@ import android.widget.TextView;
 import com.baokaicong.android.bmusic.R;
 import com.baokaicong.android.bmusic.bean.MusicMenu;
 
-public class MusicMenuListAdapter extends BaseAdapter {
+public class MenuListAdapter extends BaseAdapter {
     private MusicMenu[] musicMenus;
     private Context context;
     private LayoutInflater layoutInflater;
     private class Item{
         public ImageView icon;
         public TextView name;
+        public TextView count;
     }
-    public MusicMenuListAdapter(Context context,MusicMenu[] musicMenus){
+    public MenuListAdapter(Context context, MusicMenu[] musicMenus){
         this.musicMenus=musicMenus;
         this.context=context;
         layoutInflater=LayoutInflater.from(context);
@@ -42,10 +43,12 @@ public class MusicMenuListAdapter extends BaseAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         Item item=new Item();
-        convertView = layoutInflater.inflate(R.layout.item_music_menu, null);
+        convertView = layoutInflater.inflate(R.layout.item_home_menu, null);
         item.icon=convertView.findViewById(R.id.music_menu_icon);
         item.name=convertView.findViewById(R.id.music_menu_name);
+        item.count=convertView.findViewById(R.id.music_menu_count);
         item.name.setText(musicMenus[position].getName());
+        item.count.setText(musicMenus[position].getCount()+"首");
         return convertView;
     }
 }

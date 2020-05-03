@@ -1,11 +1,15 @@
 package com.baokaicong.android.bmusic;
 
 import android.app.Activity;
-import android.content.Context;
 import android.os.Environment;
+import android.util.Log;
 
+import com.baokaicong.android.bmusic.bean.Music;
+import com.baokaicong.android.bmusic.bean.PlayInfo;
 import com.baokaicong.android.bmusic.bean.User;
 import com.baokaicong.android.bmusic.consts.ListenerTag;
+import com.baokaicong.android.bmusic.service.remoter.MediaRemoter;
+import com.baokaicong.android.bmusic.util.ToastUtil;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -20,6 +24,8 @@ public class BMContext {
     private User user;
     private int version=1;
     private Map<ListenerTag, List> listenerMap;
+    private MediaRemoter remoter;
+    private PlayInfo playInfo;
     private BMContext(){
 
     }
@@ -32,14 +38,17 @@ public class BMContext {
         activityMap=new HashMap<>();
         dataRoot=Environment.getExternalStorageDirectory().getPath()+File.separator+"BKC/";
         listenerMap=new HashMap<>();
+        playInfo=new PlayInfo();
         return this;
     }
     private static class Holder{
-        private static final BMContext instance=new BMContext();
+        private static final BMContext instance=new BMContext(){{
+            init();
+        }};
     }
 
     public static BMContext instance(){
-        return Holder.instance.init();
+        return Holder.instance;
     }
 
     public void setCurrentUser(User user){
@@ -125,11 +134,9 @@ public class BMContext {
             if(listenerMap.containsKey(tag)){
                 listenerMap.get(tag).add(listener);
             }else{
-                listenerMap.put(tag,new ArrayList<T>(){
-                    {
-                        add(listener);
-                    }
-                });
+                List<T> list=new ArrayList<>();
+                list.add(listener);
+                listenerMap.put(tag,list);
             }
         }
     }
@@ -137,16 +144,38 @@ public class BMContext {
     /**
      * 获取监听器列表
      * @param tag
-     * @param clazz
      * @param <T>
      * @return
      */
-    public <T> List<T> getListenerList(ListenerTag tag,Class<T> clazz){
+    public <T> List<T> getListenerList(ListenerTag tag){
         synchronized (listenerMap){
             if(listenerMap.containsKey(tag)){
                 return listenerMap.get(tag);
             }
             return new ArrayList<>();
         }
+
     }
+
+    public <T> void removeListener(ListenerTag tag,T listener){
+        synchronized (listenerMap){
+            if(listenerMap.containsKey(tag)){
+                listenerMap.get(tag).remove(listener);
+            }
+        }
+    }
+
+
+    public MediaRemoter getRemoter(){
+        return this.remoter;
+    }
+
+    public void setRemoter(MediaRemoter remoter){
+        this.remoter=remoter;
+    }
+
+    public PlayInfo getPlayInfo(){
+        return this.playInfo;
+    }
+
 }

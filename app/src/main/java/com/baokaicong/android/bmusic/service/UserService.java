@@ -85,6 +85,6 @@ public class UserService extends Service {
 
 
     private void buildAPI(){
-        this.userAPI= RequestUtil.Instance().buildeRequestAPI(UserAPI.class);
+        this.userAPI= RequestUtil.Instance().buildeRequestAPI(this,UserAPI.class);
     }
 }

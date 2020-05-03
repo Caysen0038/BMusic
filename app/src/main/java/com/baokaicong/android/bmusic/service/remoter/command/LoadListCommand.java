@@ -1,13 +1,11 @@
 package com.baokaicong.android.bmusic.service.remoter.command;
 
-import com.baokaicong.android.bmusic.bean.Music;
-import com.baokaicong.android.bmusic.service.remoter.RemoteReceiver;
+import com.baokaicong.android.bmusic.bean.MusicList;
+import com.baokaicong.android.bmusic.service.remoter.MediaController;
 
-import java.util.List;
-
-public class LoadListCommand extends BaseCommand<List<Music>> {
+public class LoadListCommand extends BaseCommand<MusicList> {
     @Override
-    protected void work(RemoteReceiver receiver,List<Music> data) {
+    protected void work(MediaController receiver, MusicList data) {
         receiver.load(data);
     }
 }

@@ -17,10 +17,12 @@ import com.baokaicong.android.bmusic.bean.Result;
 import com.baokaicong.android.bmusic.bean.User;
 import com.baokaicong.android.bmusic.bean.AccountInfo;
 import com.baokaicong.android.bmusic.consts.IntentTag;
+import com.baokaicong.android.bmusic.consts.SettingField;
 import com.baokaicong.android.bmusic.service.binder.CustomBinder;
 import com.baokaicong.android.bmusic.service.UserService;
 import com.baokaicong.android.bmusic.service.request.RequestCallback;
 import com.baokaicong.android.bmusic.ui.activity.setting.NetSettingActivity;
+import com.baokaicong.android.bmusic.util.BEAUtil;
 import com.baokaicong.android.bmusic.util.ToastUtil;
 import com.baokaicong.android.bmusic.util.sql.SettingSQLUtil;
 import com.baokaicong.android.cdialog.widget.dialog.LoadingDialog;
@@ -34,16 +36,20 @@ public class LoginActivity extends AppCompatActivity {
     private ServiceConnection userCon;
     private SettingSQLUtil settingSQLUtil;
     private LoadingDialog loadingDialog;
+    private EditText username,password;
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    protected void onCreate(Bundle bundle) {
+        super.onCreate(bundle);
         setContentView(R.layout.activity_login);
         BMContext.instance().addActivity(NAME,this);
         settingSQLUtil=new SettingSQLUtil(this);
+
         init();
     }
 
     private void init(){
+        username=findViewById(R.id.login_input_username);
+        password=findViewById(R.id.login_input_password);
         userCon=new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
@@ -61,9 +67,16 @@ public class LoginActivity extends AppCompatActivity {
         settingSQLUtil=new SettingSQLUtil(this);
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        String name=getIntent().getStringExtra(SettingField.USER_NAME);
+        String pass=getIntent().getStringExtra(SettingField.USER_PASSWORD);
+        username.setText(name);
+        password.setText(pass);
+    }
+
     public void loginEvent(View view){
-        EditText username=findViewById(R.id.login_input_username);
-        EditText password=findViewById(R.id.login_input_password);
         final User user=new User();
         user.setName(username.getText().toString());
         user.setPassword(password.getText().toString());
@@ -72,14 +85,17 @@ public class LoginActivity extends AppCompatActivity {
 
     private void login(final User user){
         loading=true;
-        //switchLoginEvent();
-        loadingDialog = new LoadingDialog(this);
-        loadingDialog.setMessage("登陆ing");
-        loadingDialog.setCanceledOnTouchOutside(false);
-        loadingDialog.show();
+        switchLoginEvent();
+//        loadingDialog = new LoadingDialog(this);
+//        loadingDialog.setMessage("登陆ing");
+//        loadingDialog.setCanceledOnTouchOutside(false);
+//        loadingDialog.show();
         userService.login(user,new RequestCallback<String>() {
             @Override
             public void handleResult(Result<String> result) {
+                //loadingDialog.dismiss();
+                loading=false;
+                switchLoginEvent();
                 if(result==null || !result.getCode().equals("000000")) {
                     ToastUtil.showText(LoginActivity.this, "用户名或密码错误");
                     return;
@@ -87,17 +103,18 @@ public class LoginActivity extends AppCompatActivity {
                 // 设置当前User token
                 user.setToken(result.getData());
                 // 保存
-                settingSQLUtil.insertSetting("USERNAME",user.getName());
-                settingSQLUtil.insertSetting("USERPASSWORD",user.getPassword());
+                String pass= BEAUtil.BEA(user.getPassword(),user.getName());
+                settingSQLUtil.insertSetting(SettingField.USER_NAME,user.getName());
+                settingSQLUtil.insertSetting(SettingField.USER_PASSWORD,pass);
                 BMContext.instance().setCurrentUser(user);
                 getUserInfo(user.getToken());
-                //ToastUtil.showText(LoginActivity.this,"登录成功");
-
             }
 
             @Override
             public void handleError(Throwable t) {
-                loadingDialog.dismiss();
+                //loadingDialog.dismiss();
+                loading=false;
+                switchLoginEvent();
                 ToastUtil.showText(LoginActivity.this,"服务异常，请稍后重试");
             }
         });
@@ -129,8 +146,9 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
     }
+
     private void switchLoginEvent(){
-        if(!loading){
+        if(loading){
             findViewById(R.id.login_button_text).setVisibility(View.GONE);
             findViewById(R.id.login_button_gif).setVisibility(View.VISIBLE);
 
@@ -148,6 +166,11 @@ public class LoginActivity extends AppCompatActivity {
      */
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if(loading){
+            loading=false;
+            switchLoginEvent();
+            return true;
+        }
         if (event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
             // 设置两秒内连续两次back则退出
             if ((System.currentTimeMillis() - DOUBLE_CLICK_TIME) > 2000) {

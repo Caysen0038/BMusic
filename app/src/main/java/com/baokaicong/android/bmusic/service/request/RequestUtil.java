@@ -1,6 +1,11 @@
 package com.baokaicong.android.bmusic.service.request;
 
+import android.content.Context;
 import android.util.Log;
+
+import com.baokaicong.android.bmusic.consts.SettingField;
+import com.baokaicong.android.bmusic.util.ToastUtil;
+import com.baokaicong.android.bmusic.util.sql.SettingSQLUtil;
 
 import java.util.concurrent.TimeUnit;
 
@@ -36,8 +41,8 @@ public class RequestUtil {
         return Holder.instance;
     }
 
-    public <T> T buildeRequestAPI(Class<T> apiClazz){
-        return buildeRequestAPI(baseURL(),apiClazz);
+    public <T> T buildeRequestAPI(Context context, Class<T> apiClazz){
+        return buildeRequestAPI(baseURL(context),apiClazz);
     }
 
     public <T> T buildeRequestAPI(String url, Class<T> apiClazz){
@@ -51,8 +56,14 @@ public class RequestUtil {
         return retrofit.create(apiClazz);
     }
 
-    public String baseURL(){
-        return baseURL;
+    public String baseURL(Context context){
+        SettingSQLUtil util=new SettingSQLUtil(context);
+        String host=util.getSetting(SettingField.HOST_ADDRESS);
+        String port=util.getSetting(SettingField.HOST_PORT);
+        if(host==null || port==null){
+            return baseURL;
+        }
+        return host+":"+port+"/";
     }
 
     private void buildGsonConverterFactory(){

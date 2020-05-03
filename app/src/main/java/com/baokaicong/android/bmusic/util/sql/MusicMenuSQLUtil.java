@@ -18,11 +18,12 @@ public class MusicMenuSQLUtil extends SQLiteOpenHelper {
             "name," +
             "img," +
             "owner," +
-            "date)";
+            "date," +
+            "count)";
     private static final String UPDATE_SQL="update t_music_menu set " +
-            "name=?,img=?,owner=?,date=? where meid=?";
-    private static final String INSERT_SQL="insert into t_music_menu(meid,name,img,owner,date) " +
-            "values(?,?,?,?,?)";
+            "name=?,img=?,owner=?,date=?,count=? where meid=?";
+    private static final String INSERT_SQL="insert into t_music_menu(meid,name,img,owner,date,count) " +
+            "values(?,?,?,?,?,?)";
 
     private static final String QUERY_OWNER_SQL="select * from t_music_menu where owner=?";
 
@@ -62,7 +63,8 @@ public class MusicMenuSQLUtil extends SQLiteOpenHelper {
                     .setName(cursor.getString(2))
                     .setImg(cursor.getString(3))
                     .setOwner(owner)
-                    .setDate(cursor.getString(5));
+                    .setDate(cursor.getString(5))
+                    .setCount(cursor.getInt(6));
             list.add(menu);
 
         }
@@ -86,7 +88,8 @@ public class MusicMenuSQLUtil extends SQLiteOpenHelper {
                     .setName(cursor.getString(2))
                     .setImg(cursor.getString(3))
                     .setOwner(cursor.getString(4))
-                    .setDate(cursor.getString(5));
+                    .setDate(cursor.getString(5))
+                    .setCount(cursor.getInt(6));
         }
         cursor.close();
         return menu;
@@ -98,11 +101,13 @@ public class MusicMenuSQLUtil extends SQLiteOpenHelper {
      */
     public void updateMenu(MusicMenu menu){
         getWritableDatabase().execSQL(UPDATE_SQL,
-                new String[]{menu.getName(),
+                new Object[]{menu.getName(),
                                 menu.getImg(),
                                 menu.getOwner(),
                                 menu.getDate(),
-                                menu.getMeid()});
+                                menu.getCount(),
+                                menu.getMeid()
+                                });
     }
 
     /**

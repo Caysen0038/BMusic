@@ -1,11 +1,11 @@
 package com.baokaicong.android.bmusic.service.remoter.command;
 
-import com.baokaicong.android.bmusic.service.remoter.RemoteReceiver;
+import com.baokaicong.android.bmusic.service.remoter.MediaController;
 
 public class OpenCommand extends BaseCommand {
 
     @Override
-    protected void work(RemoteReceiver receiver,Object data) {
+    protected void work(MediaController receiver, Object data) {
         receiver.open();
     }
 }

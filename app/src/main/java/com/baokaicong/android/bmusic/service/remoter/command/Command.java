@@ -1,7 +1,7 @@
 package com.baokaicong.android.bmusic.service.remoter.command;
 
-import com.baokaicong.android.bmusic.service.remoter.RemoteReceiver;
+import com.baokaicong.android.bmusic.service.remoter.MediaController;
 
 public interface Command<T> {
-    void execute(RemoteReceiver receiver,T data);
+    void execute(MediaController receiver, T data);
 }

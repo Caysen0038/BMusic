@@ -11,7 +11,7 @@ import lombok.experimental.Accessors;
 public class Music {
     private String mid;
     private String name;
-    private String songer;
+    private String singer;
     private String aldum;
     private int duration;
     private String suffix;

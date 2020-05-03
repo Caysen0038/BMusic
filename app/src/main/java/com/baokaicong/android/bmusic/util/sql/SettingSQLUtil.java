@@ -45,13 +45,13 @@ public class SettingSQLUtil extends SQLiteOpenHelper {
     }
 
     public void updateSetting(String name,String value){
-        getWritableDatabase().execSQL(UPDATE_SQL,new String[]{value,name});
+        insertSetting(name,value);
     }
 
     public void insertSetting(String name,String value){
         Cursor cursor=getReadableDatabase().rawQuery("select _id from t_setting where name=?",new String[]{name});
         if(cursor.moveToNext()){
-            updateSetting(name,value);
+            getWritableDatabase().execSQL(UPDATE_SQL, new String[]{value, name});
         }else {
             getWritableDatabase().execSQL(INSERT_SQL, new String[]{name, value});
         }

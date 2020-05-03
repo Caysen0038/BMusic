@@ -12,4 +12,5 @@
     <color name="textBlackAccent">#343434</color>
     <color name="grayLight">#d3d3d3</color>
     <color name="whiteBg">#F9F9F9</color>
+    <color name="imgTintBlue">#328FFA</color>
 </resources>

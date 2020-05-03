@@ -8,5 +8,8 @@ public interface Player<T> {
     void playComplete();
     void release();
     boolean isPlaying();
+    boolean isLoaded();
+    int getProgress();
     boolean jump(int rate);
+    T getMedia();
 }

@@ -2,6 +2,8 @@ package com.baokaicong.android.bmusic.service.player;
 
 import android.content.Context;
 import android.media.MediaPlayer;
+import android.os.Handler;
+import android.os.Looper;
 
 import com.baokaicong.android.bmusic.R;
 import com.baokaicong.android.bmusic.bean.Music;
@@ -14,6 +16,7 @@ public class HTTPMusicPlayer implements MusicPlayer {
     private MediaPlayer mediaPlayer;
     private boolean prepared=false;
     private Music music;
+    private boolean loaded;
     private List<MusicPlayerListner> listnerList;
 
     private static class Holder{
@@ -43,17 +46,20 @@ public class HTTPMusicPlayer implements MusicPlayer {
                 @Override
                 public void onPrepared(MediaPlayer mp) {
                     prepared=true;
+                    loaded=true;
                     notifyLoadComplete();
                 }
             });
             this.mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override
                 public void onCompletion(MediaPlayer mp) {
+                    loaded=false;
                     notifyPlayComplete();
                 }
             });
             return true;
         } catch (IOException e) {
+            loaded=false;
             notifyError();
             return false;
         }
@@ -82,6 +88,7 @@ public class HTTPMusicPlayer implements MusicPlayer {
     public void playComplete() {
         if(isPlaying()){
             this.mediaPlayer.stop();
+            loaded=false;
             notifyPlayComplete();
         }
     }
@@ -90,6 +97,7 @@ public class HTTPMusicPlayer implements MusicPlayer {
     public void release() {
         if(isPlaying()){
             this.mediaPlayer.release();
+            loaded=false;
             notifyRelease();
         }
     }
@@ -100,8 +108,32 @@ public class HTTPMusicPlayer implements MusicPlayer {
     }
 
     @Override
+    public boolean isLoaded() {
+        return this.loaded;
+    }
+
+    @Override
+    public int getProgress() {
+        if(isLoaded()){
+            return this.mediaPlayer.getCurrentPosition();
+        }else{
+            return 0;
+        }
+
+    }
+
+    @Override
     public boolean jump(int rate) {
+        if(isLoaded()){
+            this.mediaPlayer.seekTo(rate);
+            return true;
+        }
         return false;
+    }
+
+    @Override
+    public Music getMedia() {
+        return this.music;
     }
 
     @Override

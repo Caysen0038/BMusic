@@ -3,4 +3,7 @@
     <declare-styleable name="IconButton">
         <attr name="icon" format="reference"/>
     </declare-styleable>
+    <declare-styleable name="BottomMusicView">
+        <attr name="mainColor" format="color"/>
+    </declare-styleable>
 </resources>
