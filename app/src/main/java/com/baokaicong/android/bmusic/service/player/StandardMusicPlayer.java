@@ -1,33 +1,26 @@
 package com.baokaicong.android.bmusic.service.player;
 
-import android.content.Context;
 import android.media.MediaPlayer;
-import android.os.Handler;
-import android.os.Looper;
 
-import com.baokaicong.android.bmusic.R;
 import com.baokaicong.android.bmusic.bean.Music;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class HTTPMusicPlayer implements MusicPlayer {
+public class StandardMusicPlayer implements MusicPlayer {
     private MediaPlayer mediaPlayer;
     private boolean prepared=false;
     private Music music;
+    private String path;
     private boolean loaded;
     private List<MusicPlayerListner> listnerList;
 
-    private static class Holder{
-        private static final HTTPMusicPlayer instance=new HTTPMusicPlayer();
+    public static StandardMusicPlayer newInstance(){
+        return new StandardMusicPlayer();
     }
 
-    public static HTTPMusicPlayer instance(){
-        return Holder.instance;
-    }
-
-    private HTTPMusicPlayer(){
+    private StandardMusicPlayer(){
         this.mediaPlayer=new MediaPlayer();
 
         listnerList=new ArrayList<>();
@@ -57,13 +50,60 @@ public class HTTPMusicPlayer implements MusicPlayer {
                     notifyPlayComplete();
                 }
             });
+            this.mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+                @Override
+                public boolean onError(MediaPlayer mp, int what, int extra) {
+                    loaded=false;
+                    notifyError();
+                    return true;
+                }
+            });
             return true;
         } catch (IOException e) {
             loaded=false;
             notifyError();
             return false;
         }
+    }
 
+    @Override
+    public boolean loadMedia(String path,boolean loop) {
+        this.path=path;
+        try {
+            this.mediaPlayer.reset();
+            this.mediaPlayer.setDataSource(path);
+            this.mediaPlayer.setLooping(loop);
+            this.mediaPlayer.prepareAsync();
+
+            this.mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(MediaPlayer mp) {
+                    prepared=true;
+                    loaded=true;
+                    notifyLoadComplete();
+                }
+            });
+            this.mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mp) {
+                    loaded=false;
+                    notifyPlayComplete();
+                }
+            });
+            this.mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+                @Override
+                public boolean onError(MediaPlayer mp, int what, int extra) {
+                    loaded=false;
+                    notifyError();
+                    return true;
+                }
+            });
+            return true;
+        } catch (IOException e) {
+            loaded=false;
+            notifyError();
+            return false;
+        }
     }
 
     @Override
@@ -104,7 +144,10 @@ public class HTTPMusicPlayer implements MusicPlayer {
 
     @Override
     public boolean isPlaying() {
-        return this.mediaPlayer.isPlaying();
+        if(loaded){
+            return this.mediaPlayer.isPlaying();
+        }
+        return false;
     }
 
     @Override

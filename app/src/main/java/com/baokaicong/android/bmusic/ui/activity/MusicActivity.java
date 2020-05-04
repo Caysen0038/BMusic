@@ -8,16 +8,21 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.KeyEvent;
+import android.view.MenuItem;
+import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.RotateAnimation;
+import android.widget.AdapterView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.baokaicong.android.bmusic.BMContext;
 import com.baokaicong.android.bmusic.R;
+import com.baokaicong.android.bmusic.bean.DownloadInfo;
 import com.baokaicong.android.bmusic.bean.Music;
 import com.baokaicong.android.bmusic.consts.ListenerTag;
 import com.baokaicong.android.bmusic.service.listener.GlobalMusicPlayListener;
@@ -26,6 +31,15 @@ import com.baokaicong.android.bmusic.service.remoter.command.NextCommand;
 import com.baokaicong.android.bmusic.service.remoter.command.PauseCommand;
 import com.baokaicong.android.bmusic.service.remoter.command.PlayCommand;
 import com.baokaicong.android.bmusic.service.remoter.command.PreCommand;
+import com.baokaicong.android.bmusic.service.worker.MusicDownloadWorker;
+import com.baokaicong.android.bmusic.service.worker.Worker;
+import com.baokaicong.android.bmusic.ui.dialog.ListSelectDialog;
+import com.baokaicong.android.bmusic.ui.dialog.PlayListDialog;
+import com.baokaicong.android.bmusic.util.ToastUtil;
+import com.baokaicong.android.bmusic.util.sql.DownloadSQLUtil;
+
+import java.io.File;
+import java.util.List;
 
 public class MusicActivity extends AppCompatActivity {
     private ImageButton back,share;
@@ -37,11 +51,13 @@ public class MusicActivity extends AppCompatActivity {
     private GlobalMusicPlayListener globalMusicPlayListener;
     private ImageView diskImg;
     private ObjectAnimator diskAnimation;
+    private DownloadSQLUtil downloadSQLUtil;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_music);
         handler=new Handler();
+        downloadSQLUtil=new DownloadSQLUtil(this);
         init();
     }
 
@@ -102,6 +118,25 @@ public class MusicActivity extends AppCompatActivity {
 
         preButton.setOnClickListener((v)->{BMContext.instance().getRemoter().command(new PreCommand(),null);});
         nextButton.setOnClickListener((v)->{BMContext.instance().getRemoter().command(new NextCommand(),null);});
+        modeButton.setOnClickListener((v)->{
+            PopupMenu popupMenu = new PopupMenu(MusicActivity.this, modeButton);
+            popupMenu.getMenuInflater().inflate(R.menu.dialog_mode_item, popupMenu.getMenu());
+            popupMenu.show();
+
+            popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                @Override
+                public boolean onMenuItemClick(MenuItem item) {
+                    // 控件每一个item的点击事件
+                    return true;
+                }
+            });
+        });
+        songListButton.setOnClickListener((v)->{
+            PlayListDialog dialog=PlayListDialog.builder(this);
+            dialog.show();
+        });
+
+        downloadButton.setOnClickListener((v)->{downloadMP3();});
     }
 
     @Override
@@ -127,6 +162,60 @@ public class MusicActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         BMContext.instance().removeListener(ListenerTag.MUSIC,globalMusicPlayListener);
+    }
+
+    private void downloadMP3(){
+        Music music=BMContext.instance().getPlayInfo().getCurrentMusic();
+        if(music!=null){
+            if(isMP3InfoExists(music)){
+                ToastUtil.showText(this,music.getName()+"已下载");
+            }else{
+                String path=buildMusicFileName(music);
+                DownloadInfo info=new DownloadInfo()
+                        .setUserId(BMContext.instance().getUser().getId())
+                        .setDate(System.currentTimeMillis()+"")
+                        .setMid(music.getMid())
+                        .setPath(path);
+                downloadSQLUtil.insertInfo(info);
+                MusicDownloadWorker worker=new MusicDownloadWorker();
+                worker.addListener(new Worker.WorkerListener<Music>() {
+                    @Override
+                    public void onStart(Music param) {
+                        ToastUtil.showText(MusicActivity.this,param.getName()+"开始下载");
+                    }
+
+                    @Override
+                    public void onComplete(Music param) {
+                        ToastUtil.showText(MusicActivity.this,param.getName()+"下载完成");
+                    }
+
+                    @Override
+                    public void progress(int progress) {
+
+                    }
+
+                    @Override
+                    public void onError(Music param) {
+
+                    }
+                });
+                worker.download(music,path);
+            }
+        }
+    }
+
+    private boolean isMP3InfoExists(Music music){
+        DownloadInfo info=downloadSQLUtil.getInfo(music.getMid());
+        if(info==null){
+            return false;
+        }
+        File file=new File(info.getPath());
+        if(file.exists()){
+            return true;
+        }else{
+            downloadSQLUtil.deleteInfo(music.getMid());
+            return false;
+        }
     }
 
     private class BottomGlobalMusicPlayListener implements GlobalMusicPlayListener {
@@ -177,6 +266,7 @@ public class MusicActivity extends AppCompatActivity {
         }
     }
 
+
     private String parseTime(int n){
         int m=n/60;
         int s=n%50;
@@ -186,5 +276,9 @@ public class MusicActivity extends AppCompatActivity {
             return m+":"+s;
         }
 
+    }
+
+    private String buildMusicFileName(Music music){
+        return BMContext.instance().getDataRoot()+"Download/Music/"+music.getName()+" - "+music.getSinger()+"."+music.getSuffix();
     }
 }

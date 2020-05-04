@@ -35,6 +35,7 @@ import com.baokaicong.android.bmusic.service.request.RequestCallback;
 import com.baokaicong.android.bmusic.ui.adapter.MusicListAdapter;
 import com.baokaicong.android.bmusic.ui.view.BottomMusicView;
 import com.baokaicong.android.bmusic.util.ToastUtil;
+import com.baokaicong.android.bmusic.util.sql.MusicMenuSQLUtil;
 import com.baokaicong.android.cdialog.consts.SheetItemColor;
 import com.baokaicong.android.cdialog.widget.dialog.bDialog.BActionSheetDialog;
 import com.google.gson.Gson;
@@ -54,6 +55,7 @@ public class MenuMusicsActivity extends AppCompatActivity {
     private MenuService menuService;
     private MediaRemoter remoter;
     private BottomMusicView bottomMusicView;
+    private MusicMenuSQLUtil musicMenuSQLUtil;
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
@@ -61,9 +63,10 @@ public class MenuMusicsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_menu_musics);
         handler=new Handler();
-        String m=getIntent().getStringExtra("menu");
-        if(m!=null){
-            menu=new Gson().fromJson(m,MusicMenu.class);
+        musicMenuSQLUtil=new MusicMenuSQLUtil(this);
+        String meid=getIntent().getStringExtra("meid");
+        if(meid!=null){
+            menu=musicMenuSQLUtil.getMenu(meid);
         }
         init();
     }
@@ -251,6 +254,9 @@ public class MenuMusicsActivity extends AppCompatActivity {
                 }
                 if(result.getData()){
                     ToastUtil.showText(MenuMusicsActivity.this,music.getName()+"已移除");
+                    menu.setCount(menu.getCount()-1);
+                    musicMenuSQLUtil.updateMenu(menu);
+                    refreshContent();
                 }else{
                     ToastUtil.showText(MenuMusicsActivity.this,music.getName()+"未能移除");
                 }
@@ -268,6 +274,9 @@ public class MenuMusicsActivity extends AppCompatActivity {
         super.onDestroy();
         if(menuService !=null){
             unbindService(musicMenuCon);
+        }
+        if(musicMenuSQLUtil!=null){
+            musicMenuSQLUtil.close();
         }
     }
 }

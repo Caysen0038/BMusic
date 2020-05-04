@@ -7,4 +7,5 @@ public class PlayInfo {
     private Music currentMusic;
     private int progress;
     private boolean isPlaying;
+    private MusicList musicList;
 }

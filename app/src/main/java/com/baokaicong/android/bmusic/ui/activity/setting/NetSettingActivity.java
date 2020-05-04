@@ -8,27 +8,27 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.baokaicong.android.bmusic.BMContext;
 import com.baokaicong.android.bmusic.R;
 import com.baokaicong.android.bmusic.consts.SettingField;
-import com.baokaicong.android.bmusic.util.sql.SettingSQLUtil;
+import com.baokaicong.android.bmusic.util.sql.PropertySQLUtil;
 
 public class NetSettingActivity extends AppCompatActivity {
     private static final String NAME="netsetting";
     private String oldHost,oldPort;
     private EditText hostEdit,portEdit;
-    private SettingSQLUtil settingSQLUtil;
+    private PropertySQLUtil propertySQLUtil;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_setting_net);
         BMContext.instance().addActivity(NAME,this);
-        this.settingSQLUtil=new SettingSQLUtil(this);
+        this.propertySQLUtil =new PropertySQLUtil(this);
         initView();
     }
 
     private void initView(){
         hostEdit=findViewById(R.id.net_host_edit);
         portEdit=findViewById(R.id.net_port_edit);
-        oldHost=settingSQLUtil.getSetting(SettingField.HOST_ADDRESS);
-        oldPort=settingSQLUtil.getSetting(SettingField.HOST_PORT);
+        oldHost= propertySQLUtil.getProperty(SettingField.HOST_ADDRESS);
+        oldPort= propertySQLUtil.getProperty(SettingField.HOST_PORT);
         hostEdit.setText(oldHost);
         portEdit.setText(oldPort);
     }
@@ -73,10 +73,10 @@ public class NetSettingActivity extends AppCompatActivity {
         String host=hostEdit.getText().toString();
         String port=portEdit.getText().toString();
         if(!host.equals(oldHost)){
-            settingSQLUtil.updateSetting(SettingField.HOST_ADDRESS,host);
+            propertySQLUtil.updateProperty(SettingField.HOST_ADDRESS,host);
         }
         if(!port.equals(oldPort)){
-            settingSQLUtil.updateSetting(SettingField.HOST_PORT,port);
+            propertySQLUtil.updateProperty(SettingField.HOST_PORT,port);
         }
         BMContext.instance().removeActivity(NAME);
         finish();
@@ -86,8 +86,8 @@ public class NetSettingActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if(settingSQLUtil!=null){
-            settingSQLUtil.close();
+        if(propertySQLUtil !=null){
+            propertySQLUtil.close();
         }
     }
 }

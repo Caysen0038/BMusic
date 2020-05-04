@@ -8,9 +8,7 @@ import androidx.fragment.app.FragmentTransaction;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.ActivityManager;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
@@ -24,16 +22,12 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ListAdapter;
 import android.widget.ListView;
-import android.widget.SimpleAdapter;
 
 import com.baokaicong.android.bmusic.BMContext;
 import com.baokaicong.android.bmusic.R;
 import com.baokaicong.android.bmusic.bean.Music;
-import com.baokaicong.android.bmusic.bean.MusicURL;
 import com.baokaicong.android.bmusic.consts.SettingField;
 import com.baokaicong.android.bmusic.service.UserService;
-import com.baokaicong.android.bmusic.service.binder.CustomBinder;
-import com.baokaicong.android.bmusic.service.remoter.command.LoadListCommand;
 import com.baokaicong.android.bmusic.service.remoter.command.NextCommand;
 import com.baokaicong.android.bmusic.service.remoter.command.OpenCommand;
 import com.baokaicong.android.bmusic.service.remoter.command.PauseCommand;
@@ -48,12 +42,9 @@ import com.baokaicong.android.bmusic.ui.fragment.HomeFragment;
 import com.baokaicong.android.bmusic.ui.fragment.NewsFragment;
 import com.baokaicong.android.bmusic.ui.view.BottomMusicView;
 import com.baokaicong.android.bmusic.ui.view.MainToolbar;
-import com.baokaicong.android.bmusic.util.ToastUtil;
-import com.baokaicong.android.bmusic.util.sql.SettingSQLUtil;
+import com.baokaicong.android.bmusic.util.sql.PropertySQLUtil;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
@@ -62,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
     private MainToolbar toolbar;
     private static long DOUBLE_CLICK_TIME = 0L;
     private Map<Integer, BFragment> fragmentMap;
-    private int lastfragment=0;
+    private int currentFragment=0;
     private BottomMusicView bottomMusicView;
     private MediaRemoter mediaRemoter;
     private Map<String,Integer> navMap;
@@ -70,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
     private ServiceConnection userCon;
     private UserService userService;
     private Button logoutButton;
-    private SettingSQLUtil settingSQLUtil;
+    private PropertySQLUtil propertySQLUtil;
     private ImageButton searchButton;
 
     @Override
@@ -85,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
         };
         PermissionUtil.Instance()
                 .request(this,str);
-        settingSQLUtil=new SettingSQLUtil(this);
+        propertySQLUtil =new PropertySQLUtil(this);
         init();
     }
 
@@ -180,9 +171,9 @@ public class MainActivity extends AppCompatActivity {
         fragmentMap = new HashMap<>();
         fragmentMap.put(R.id.fragment_home, new HomeFragment());
         fragmentMap.put(R.id.fragment_news, new NewsFragment());
-        lastfragment = R.id.fragment_home;
+        currentFragment = R.id.fragment_home;
         getSupportFragmentManager().beginTransaction()
-                .replace(R.id.main_container, fragmentMap.get(lastfragment))
+                .replace(R.id.main_container, fragmentMap.get(currentFragment))
                 .show(fragmentMap.get(R.id.fragment_home)).commit();
     }
 
@@ -200,9 +191,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-//        for(BFragment f:fragmentMap.values()){
-//            f.resume();
-//        }
+        for(BFragment f:fragmentMap.values()){
+            f.resume();
+        }
     }
 
     /**
@@ -230,7 +221,7 @@ public class MainActivity extends AppCompatActivity {
      */
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if(fragmentMap.get(lastfragment).keyDown(keyCode,event)){
+        if(fragmentMap.get(currentFragment).keyDown(keyCode,event)){
             return true;
         }
         if (event.getKeyCode() == KeyEvent.KEYCODE_MENU && drawerLayout != null) {
@@ -302,19 +293,22 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
+    /**
+     * 注销登录
+     */
     private void logout(){
-        String username=settingSQLUtil.getSetting(SettingField.USER_NAME);
-        String password=settingSQLUtil.getSetting(SettingField.USER_PASSWORD);
-        settingSQLUtil.deleteSetting(SettingField.USER_NAME);
-        settingSQLUtil.deleteSetting(SettingField.USER_PASSWORD);
+        String username= propertySQLUtil.getProperty(SettingField.USER_NAME);
+        String password= propertySQLUtil.getProperty(SettingField.USER_PASSWORD);
+        propertySQLUtil.deleteProperty(SettingField.USER_NAME);
+        propertySQLUtil.deleteProperty(SettingField.USER_PASSWORD);
         BMContext.instance().setCurrentUser(null);
+        BMContext.instance().getRemoter().command(new ShutdownCommand(),null);
         Intent intent=new Intent(this,LoginActivity.class);
         intent.putExtra(SettingField.USER_NAME,username);
         if(password!=null && password.length()>0){
             password= BEAUtil.DBEA(password,username);
         }
         intent.putExtra(SettingField.USER_PASSWORD,password);
-        Log.i("注销账户",username+"   "+password);
         startActivity(intent);
         this.finish();
     }
@@ -328,8 +322,8 @@ public class MainActivity extends AppCompatActivity {
         if(userCon!=null){
             unbindService(userCon);
         }
-        if(settingSQLUtil!=null){
-            settingSQLUtil.close();
+        if(propertySQLUtil !=null){
+            propertySQLUtil.close();
         }
         mediaRemoter.command(new ShutdownCommand(),null);
         mediaRemoter=null;

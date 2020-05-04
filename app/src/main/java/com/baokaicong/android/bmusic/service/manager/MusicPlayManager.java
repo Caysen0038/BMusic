@@ -1,5 +1,6 @@
 package com.baokaicong.android.bmusic.service.manager;
 
+import com.baokaicong.android.bmusic.BMContext;
 import com.baokaicong.android.bmusic.bean.Music;
 import com.baokaicong.android.bmusic.bean.MusicList;
 import com.baokaicong.android.bmusic.consts.PlayMode;
@@ -15,6 +16,7 @@ public class MusicPlayManager {
         musicList=new MusicList();
         current=0;
         mode=PlayMode.LIST;
+
     }
 
     /**
@@ -181,5 +183,18 @@ public class MusicPlayManager {
      */
     public int getCurrent(){
         return this.current;
+    }
+
+    public MusicList getMusicList(){
+
+        return this.musicList;
+    }
+
+    public boolean contains(Music music){
+        return this.musicList.contains(music);
+    }
+
+    public int getMusicPosition(Music music){
+        return this.musicList.getMusicPosition(music);
     }
 }

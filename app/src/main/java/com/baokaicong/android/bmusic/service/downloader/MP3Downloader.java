@@ -55,7 +55,7 @@ public class MP3Downloader implements HTTPDownloader {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-        byte[] data=new byte[1024];
+        byte[] data=new byte[1024*128];
         int len;
         try{
             while((len=input.read(data))>0){

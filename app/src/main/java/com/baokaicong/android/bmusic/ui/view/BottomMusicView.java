@@ -26,6 +26,7 @@ import com.baokaicong.android.bmusic.consts.ListenerTag;
 import com.baokaicong.android.bmusic.service.listener.GlobalMusicPlayListener;
 import com.baokaicong.android.bmusic.service.remoter.command.JumpCommand;
 import com.baokaicong.android.bmusic.ui.activity.MusicActivity;
+import com.baokaicong.android.bmusic.ui.dialog.PlayListDialog;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -119,7 +120,8 @@ public class BottomMusicView extends LinearLayout {
         });
 
         listButton.setOnClickListener((v)->{
-
+            PlayListDialog dialog=PlayListDialog.builder(getContext());
+            dialog.show();
         });
         switchButton.setOnClickListener((v)->{
             notifySwitch(null);

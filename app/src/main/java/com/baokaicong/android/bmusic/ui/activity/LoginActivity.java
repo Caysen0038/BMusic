@@ -24,7 +24,7 @@ import com.baokaicong.android.bmusic.service.request.RequestCallback;
 import com.baokaicong.android.bmusic.ui.activity.setting.NetSettingActivity;
 import com.baokaicong.android.bmusic.util.BEAUtil;
 import com.baokaicong.android.bmusic.util.ToastUtil;
-import com.baokaicong.android.bmusic.util.sql.SettingSQLUtil;
+import com.baokaicong.android.bmusic.util.sql.PropertySQLUtil;
 import com.baokaicong.android.cdialog.widget.dialog.LoadingDialog;
 
 
@@ -34,7 +34,7 @@ public class LoginActivity extends AppCompatActivity {
     private static long DOUBLE_CLICK_TIME = 0L;
     private UserService userService;
     private ServiceConnection userCon;
-    private SettingSQLUtil settingSQLUtil;
+    private PropertySQLUtil propertySQLUtil;
     private LoadingDialog loadingDialog;
     private EditText username,password;
     @Override
@@ -42,7 +42,7 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(bundle);
         setContentView(R.layout.activity_login);
         BMContext.instance().addActivity(NAME,this);
-        settingSQLUtil=new SettingSQLUtil(this);
+        propertySQLUtil =new PropertySQLUtil(this);
 
         init();
     }
@@ -64,7 +64,7 @@ public class LoginActivity extends AppCompatActivity {
         };
         Intent intent=new Intent(this,UserService.class);
         bindService(intent,userCon,BIND_AUTO_CREATE);
-        settingSQLUtil=new SettingSQLUtil(this);
+        propertySQLUtil =new PropertySQLUtil(this);
     }
 
     @Override
@@ -104,8 +104,8 @@ public class LoginActivity extends AppCompatActivity {
                 user.setToken(result.getData());
                 // 保存
                 String pass= BEAUtil.BEA(user.getPassword(),user.getName());
-                settingSQLUtil.insertSetting(SettingField.USER_NAME,user.getName());
-                settingSQLUtil.insertSetting(SettingField.USER_PASSWORD,pass);
+                propertySQLUtil.insertProperty(SettingField.USER_NAME,user.getName());
+                propertySQLUtil.insertProperty(SettingField.USER_PASSWORD,pass);
                 BMContext.instance().setCurrentUser(user);
                 getUserInfo(user.getToken());
             }
@@ -208,8 +208,8 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if(settingSQLUtil!=null){
-            settingSQLUtil.close();
+        if(propertySQLUtil !=null){
+            propertySQLUtil.close();
         }
         unbindService(userCon);
     }

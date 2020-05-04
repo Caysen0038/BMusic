@@ -58,4 +58,12 @@ public class MusicList {
     public void clear(){
         list.clear();
     }
+
+    public boolean contains(Music music){
+        return this.list.contains(music);
+    }
+
+    public int getMusicPosition(Music music){
+        return this.list.indexOf(music);
+    }
 }

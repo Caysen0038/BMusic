@@ -32,6 +32,7 @@ import com.baokaicong.android.bmusic.service.UserService;
 import com.baokaicong.android.bmusic.service.binder.CustomBinder;
 import com.baokaicong.android.bmusic.service.remoter.command.InsertCommand;
 import com.baokaicong.android.bmusic.service.remoter.command.PlayCommand;
+import com.baokaicong.android.bmusic.service.request.BaseRequestCallback;
 import com.baokaicong.android.bmusic.service.request.RequestCallback;
 import com.baokaicong.android.bmusic.ui.adapter.MusicListAdapter;
 import com.baokaicong.android.bmusic.ui.dialog.ListSelectDialog;
@@ -130,7 +131,8 @@ public class SearchActivity extends AppCompatActivity {
     private void search(String keyword){
         searching=true;
         switchView();
-        musicService.search(BMContext.instance().getUser().getToken(), keyword, new RequestCallback<List<Music>>() {
+        musicService.search(BMContext.instance().getUser().getToken(), keyword,
+                new RequestCallback<List<Music>>() {
             @Override
             public void handleResult(Result<List<Music>> result) {
                 searching=false;
@@ -179,32 +181,27 @@ public class SearchActivity extends AppCompatActivity {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                         MusicMenu menu=menuList.get(position);
-                        menuService.addMusic(BMContext.instance().getUser().getToken(), menu.getMeid(), music.getMid(), new RequestCallback<Boolean>() {
+                        menuService.addMusic(BMContext.instance().getUser().getToken(), menu.getMeid(), music.getMid(),
+                                new BaseRequestCallback<Boolean>(SearchActivity.this) {
                             @Override
                             public void handleResult(Result<Boolean> result) {
                                 if(result==null || !result.getCode().equals("000000")){
                                     ToastUtil.showText(SearchActivity.this,"添加失败");
                                 }else{
                                     ToastUtil.showText(SearchActivity.this,"添加成功");
+                                    updateMenuCount(menu,1);
                                 }
-                                dialog.dismiss();
-                            }
-
-                            @Override
-                            public void handleError(Throwable t) {
-                                ToastUtil.showText(SearchActivity.this,"请求错误");
                                 dialog.dismiss();
                             }
                         });
                     }
                 }).show();
-//        BMultiListViewDialog listDialog=new BMultiListViewDialog(this).builder();
-//        BaseAdapter adapter=new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1,strs);
-//        listDialog.setAdapter(adapter)
-//            .setOnItemClickListener();
-//        listDialog.show();
     }
 
+    private void updateMenuCount(MusicMenu menu,int num){
+        menu.setCount(menu.getCount()+num);
+        musicMenuSQLUtil.updateMenu(menu);
+    }
 
     private void switchView(){
         if(searching){

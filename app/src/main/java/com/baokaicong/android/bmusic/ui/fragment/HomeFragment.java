@@ -30,8 +30,10 @@ import com.baokaicong.android.bmusic.service.request.RequestCallback;
 import com.baokaicong.android.bmusic.ui.activity.MenuMusicsActivity;
 import com.baokaicong.android.bmusic.ui.adapter.MenuListAdapter;
 import com.baokaicong.android.bmusic.ui.view.IconButton;
+import com.baokaicong.android.bmusic.util.sql.DownloadSQLUtil;
 import com.baokaicong.android.bmusic.util.sql.MusicMenuSQLUtil;
 import com.baokaicong.android.bmusic.util.ToastUtil;
+import com.baokaicong.android.bmusic.util.sql.PropertySQLUtil;
 import com.baokaicong.android.cdialog.consts.SheetItemColor;
 import com.baokaicong.android.cdialog.widget.dialog.bDialog.BActionSheetDialog;
 import com.baokaicong.android.cdialog.widget.dialog.bDialog.BAlertDialog;
@@ -50,6 +52,8 @@ public class HomeFragment extends BFragment {
     private SwipeRefreshLayout swipeRefreshLayout;
     private Handler handler;
     private MusicMenuSQLUtil musicMenuSQLUtil;
+    private DownloadSQLUtil downloadSQLUtil;
+    private PropertySQLUtil propertySQLUtil;
     private ServiceConnection musicMenuCon;
     private MenuService menuService;
     private MenuListAdapter menuAdapter;
@@ -58,6 +62,7 @@ public class HomeFragment extends BFragment {
     private ImageView userImage;
     private ImageButton addMenuButton;
     private IconButton syncMenuButton;
+    private TextView musicDownloadCount;
     public HomeFragment() {
         handler=new Handler();
     }
@@ -66,6 +71,8 @@ public class HomeFragment extends BFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         musicMenuSQLUtil =new MusicMenuSQLUtil(getContext());
+        downloadSQLUtil=new DownloadSQLUtil(getContext());
+        propertySQLUtil=new PropertySQLUtil(getContext());
         musicMenuCon=new ServiceConnection(){
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
@@ -88,6 +95,7 @@ public class HomeFragment extends BFragment {
         usernameText=root.findViewById(R.id.user_name);
         userDescText=root.findViewById(R.id.user_desc);
         userImage=root.findViewById(R.id.user_img);
+        musicDownloadCount=root.findViewById(R.id.music_download_count);
         initSwipeRefreshLayout();
         initMusicMenuView();
         return root;
@@ -96,7 +104,7 @@ public class HomeFragment extends BFragment {
     @Override
     public void onResume() {
         super.onResume();
-        resume();
+
     }
 
     /**
@@ -158,9 +166,9 @@ public class HomeFragment extends BFragment {
     @Override
     public void resume() {
         usernameText.setText(BMContext.instance().getUser().getUserInfo().getName());
-//        if(menuService!=null){
-//            refreshContent();
-//        }
+        if(menuService!=null){
+            refreshContent();
+        }
     }
 
     @Override
@@ -174,6 +182,7 @@ public class HomeFragment extends BFragment {
     private void refreshContent(){
         List<MusicMenu> list=musicMenuSQLUtil.listOwnerMenu(BMContext.instance().getUser().getUserInfo().getAccountId());
         loadMusicMenu(list);
+        musicDownloadCount.setText(downloadSQLUtil.countAll()+"首");
         refreshFinished();
     }
 
@@ -244,7 +253,7 @@ public class HomeFragment extends BFragment {
     private void menuItemClick(int p){
         MusicMenu menu= (MusicMenu) menuAdapter.getItem(p);
         Intent intent=new Intent(getContext(), MenuMusicsActivity.class);
-        intent.putExtra("menu",new Gson().toJson(menu));
+        intent.putExtra("meid",menu.getMeid());
         startActivity(intent);
     }
 
@@ -348,6 +357,15 @@ public class HomeFragment extends BFragment {
         super.onDestroy();
         if(menuService !=null){
             getContext().unbindService(musicMenuCon);
+        }
+        if(musicMenuSQLUtil!=null){
+            musicMenuSQLUtil.close();
+        }
+        if(downloadSQLUtil!=null){
+            downloadSQLUtil.close();
+        }
+        if(propertySQLUtil!=null){
+            propertySQLUtil.close();
         }
     }
 }

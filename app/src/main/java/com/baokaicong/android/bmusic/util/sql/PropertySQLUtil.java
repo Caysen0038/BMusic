@@ -10,17 +10,17 @@ import androidx.annotation.Nullable;
 
 import com.baokaicong.android.bmusic.BMContext;
 
-public class SettingSQLUtil extends SQLiteOpenHelper {
-    private static final String TABLE_NAME="t_setting";
-    private static final String CREATE_TABLE="create table t_setting(" +
+public class PropertySQLUtil extends SQLiteOpenHelper {
+    private static final String TABLE_NAME="t_property";
+    private static final String CREATE_TABLE="create table t_property(" +
             "_id integer primary key autoincrement," +
             "name," +
             "value)";
-    private static final String QUERY_SQL="select * from t_setting where name=?";
-    private static final String INSERT_SQL="insert into t_setting(name,value) values(?,?)";
-    private static final String UPDATE_SQL="update t_setting set value=? where name=?";
-    private static final String DELETE_SQL="delete from t_setting where name=?";
-    public SettingSQLUtil(Context context) {
+    private static final String QUERY_SQL="select * from t_property where name=?";
+    private static final String INSERT_SQL="insert into t_property(name,value) values(?,?)";
+    private static final String UPDATE_SQL="update t_property set value=? where name=?";
+    private static final String DELETE_SQL="delete from t_property where name=?";
+    public PropertySQLUtil(Context context) {
         super(context, TABLE_NAME, null, BMContext.instance().getVersion());
     }
 
@@ -34,31 +34,35 @@ public class SettingSQLUtil extends SQLiteOpenHelper {
 
     }
 
-    public String getSetting(String name){
+    public String getProperty(String name){
         Cursor cursor=getReadableDatabase().rawQuery(QUERY_SQL,new String[]{name});
         String value=null;
         if(cursor.moveToNext()){
             value=cursor.getString(2);
         }
-        cursor.close();
+        if(cursor!=null){
+            cursor.close();
+        }
         return value;
     }
 
-    public void updateSetting(String name,String value){
-        insertSetting(name,value);
+    public void updateProperty(String name,String value){
+        insertProperty(name,value);
     }
 
-    public void insertSetting(String name,String value){
-        Cursor cursor=getReadableDatabase().rawQuery("select _id from t_setting where name=?",new String[]{name});
+    public void insertProperty(String name,String value){
+        Cursor cursor=getReadableDatabase().rawQuery("select _id from t_property where name=?",new String[]{name});
         if(cursor.moveToNext()){
             getWritableDatabase().execSQL(UPDATE_SQL, new String[]{value, name});
         }else {
             getWritableDatabase().execSQL(INSERT_SQL, new String[]{name, value});
         }
-        cursor.close();
+        if(cursor!=null){
+            cursor.close();
+        }
     }
 
-    public void deleteSetting(String name){
+    public void deleteProperty(String name){
         getWritableDatabase().execSQL(DELETE_SQL,new String[]{name});
     }
 }

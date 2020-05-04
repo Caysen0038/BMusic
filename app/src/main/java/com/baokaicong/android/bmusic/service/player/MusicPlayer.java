@@ -11,6 +11,7 @@ public interface MusicPlayer extends Player<Music>{
         void onRelease();
         void onError();
     }
+    boolean loadMedia(String path,boolean loop);
     void addMusicPlayerListner(MusicPlayerListner listner);
     void removeMusicPlayerListner(MusicPlayerListner listner);
 }

@@ -143,6 +143,7 @@
                 android:text="下载"
                 android:textColor="#EAEAEA"/>
             <TextView
+                android:id="@+id/music_download_count"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="30"

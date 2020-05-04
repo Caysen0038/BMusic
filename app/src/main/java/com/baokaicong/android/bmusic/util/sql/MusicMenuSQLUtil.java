@@ -68,7 +68,9 @@ public class MusicMenuSQLUtil extends SQLiteOpenHelper {
             list.add(menu);
 
         }
-        cursor.close();
+        if(cursor!=null){
+            cursor.close();
+        }
         return list;
     }
 
@@ -91,7 +93,9 @@ public class MusicMenuSQLUtil extends SQLiteOpenHelper {
                     .setDate(cursor.getString(5))
                     .setCount(cursor.getInt(6));
         }
-        cursor.close();
+        if(cursor!=null){
+            cursor.close();
+        }
         return menu;
     }
 
