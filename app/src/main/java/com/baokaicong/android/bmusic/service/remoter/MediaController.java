@@ -2,6 +2,7 @@ package com.baokaicong.android.bmusic.service.remoter;
 
 import com.baokaicong.android.bmusic.bean.Music;
 import com.baokaicong.android.bmusic.bean.MusicList;
+import com.baokaicong.android.bmusic.consts.PlayMode;
 
 /**
  * 媒体控制器，负责处理媒体播放等操作
@@ -70,4 +71,10 @@ public interface MediaController<T> {
      * @param rate
      */
     void jump(int rate);
+
+    /**
+     * 切换播放模式
+     * @param mode
+     */
+    void playMode(PlayMode mode);
 }

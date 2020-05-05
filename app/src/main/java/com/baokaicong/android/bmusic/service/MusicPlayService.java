@@ -6,6 +6,8 @@ import android.content.ServiceConnection;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
 
 import androidx.annotation.RequiresApi;
 
@@ -14,6 +16,7 @@ import com.baokaicong.android.bmusic.bean.DownloadInfo;
 import com.baokaicong.android.bmusic.bean.Music;
 import com.baokaicong.android.bmusic.bean.MusicList;
 import com.baokaicong.android.bmusic.consts.ListenerTag;
+import com.baokaicong.android.bmusic.consts.PlayMode;
 import com.baokaicong.android.bmusic.service.listener.GlobalMusicPlayListener;
 import com.baokaicong.android.bmusic.service.manager.MusicPlayManager;
 import com.baokaicong.android.bmusic.service.remoter.MediaController;
@@ -47,6 +50,8 @@ public class MusicPlayService extends Service implements MediaController<Music> 
 
     private ServiceMusicPlayerListener musicPlayerListener;
 
+    private ServicePhoneStateListener phoneStateListener;
+
     private boolean watching=false;
 
 
@@ -55,6 +60,14 @@ public class MusicPlayService extends Service implements MediaController<Music> 
         super.onCreate();
         remoter=new MusicRemoter(this);
         musicPlayerListener=new ServiceMusicPlayerListener();
+        phoneStateListener=new ServicePhoneStateListener();
+
+        // 监听通话
+        TelephonyManager manager = (TelephonyManager) this
+                .getSystemService(TELEPHONY_SERVICE);
+        manager.listen(phoneStateListener,
+                PhoneStateListener.LISTEN_CALL_STATE);
+
         downloadSQLUtil=new DownloadSQLUtil(this);
     }
 
@@ -83,6 +96,7 @@ public class MusicPlayService extends Service implements MediaController<Music> 
         musicPlayer.addMusicPlayerListner(this.musicPlayerListener);
         mediaRunning=true;
         BMContext.instance().getPlayInfo().setMusicList(musicManager.getMusicList());
+        BMContext.instance().getPlayInfo().setMode(musicManager.getPlayMode());
         watchProgress();
     }
 
@@ -172,7 +186,6 @@ public class MusicPlayService extends Service implements MediaController<Music> 
             return;
         Music m=musicManager.getNextMusic();
         if(m!=null){
-
             loadMusic(m,true);
         }
 
@@ -195,6 +208,12 @@ public class MusicPlayService extends Service implements MediaController<Music> 
         if(!mediaRunning)
             return;
         musicPlayer.jump(rate*1000);
+    }
+
+    @Override
+    public void playMode(PlayMode mode) {
+        musicManager.switchMode(mode);
+        BMContext.instance().getPlayInfo().setMode(musicManager.getPlayMode());
     }
 
     /**
@@ -292,13 +311,13 @@ public class MusicPlayService extends Service implements MediaController<Music> 
         @Override
         public void onPlayComplete() {
             watching=false;
+            notifyPause(musicPlayer.getMedia());
             next();
         }
 
         @Override
         public void onRelease() {
             watching=false;
-
         }
 
         @Override
@@ -308,6 +327,30 @@ public class MusicPlayService extends Service implements MediaController<Music> 
 
     }
 
+    /**
+     * 通话状态监听
+     */
+    private class ServicePhoneStateListener extends PhoneStateListener {
+        private boolean interrupt=false;
+        @Override
+        public void onCallStateChanged(int state, String phoneNumber) {
+            switch(state){
+                case TelephonyManager.CALL_STATE_IDLE:  // 闲置
+                    if(interrupt){
+                        play();
+                    }
+                    break;
+                case TelephonyManager.CALL_STATE_RINGING:  // 响铃
+
+                case TelephonyManager.CALL_STATE_OFFHOOK:  // 接听
+                    if(BMContext.instance().getPlayInfo().isPlaying()){
+                        interrupt=true;
+                        pause();
+                    }
+                    break;
+            }
+        }
+    }
 
     public static class MusicBinder extends Binder {
         private MediaRemoter remoter;

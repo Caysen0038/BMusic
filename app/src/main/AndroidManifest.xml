@@ -16,8 +16,18 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
-        <activity android:name=".ui.activity.MusicActivity"
-            android:launchMode="singleTask"></activity>
+        <receiver
+            android:name=".ui.broadcast.RemoteReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.baokaicong.music.receiver.remote"/>
+            </intent-filter>
+        </receiver>
+
+        <activity
+            android:name=".ui.activity.MusicActivity"
+            android:launchMode="singleTask" />
 
         <service
             android:name=".service.MusicService"

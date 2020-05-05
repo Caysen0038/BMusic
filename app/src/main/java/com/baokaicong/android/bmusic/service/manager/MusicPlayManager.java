@@ -84,6 +84,7 @@ public class MusicPlayManager {
                 if(musicList.size()>0){
                     music=musicList.get(current);
                 }
+                break;
             case LIST:
                 if(musicList.size()>0){
                     current=++current%musicList.size();
@@ -111,6 +112,7 @@ public class MusicPlayManager {
                 if(musicList.size()>0){
                     music=musicList.get(current);
                 }
+                break;
             case LIST:
                 if(current==0){
                     current=musicList.size();
@@ -146,7 +148,7 @@ public class MusicPlayManager {
      * @return
      */
     public PlayMode getPlayMode(){
-        return this.getPlayMode();
+        return this.mode;
     }
 
     /**
@@ -159,8 +161,10 @@ public class MusicPlayManager {
             case NORMAL:
             case REPEAT:
                 this.mode=mode;
+                break;
             default:
                 this.mode=PlayMode.LIST;
+                break;
         }
     }
 

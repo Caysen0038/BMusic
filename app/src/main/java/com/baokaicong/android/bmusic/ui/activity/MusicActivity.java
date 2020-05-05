@@ -9,11 +9,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.view.KeyEvent;
 import android.view.MenuItem;
-import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.LinearInterpolator;
-import android.view.animation.RotateAnimation;
-import android.widget.AdapterView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
@@ -25,21 +22,21 @@ import com.baokaicong.android.bmusic.R;
 import com.baokaicong.android.bmusic.bean.DownloadInfo;
 import com.baokaicong.android.bmusic.bean.Music;
 import com.baokaicong.android.bmusic.consts.ListenerTag;
+import com.baokaicong.android.bmusic.consts.PlayMode;
 import com.baokaicong.android.bmusic.service.listener.GlobalMusicPlayListener;
 import com.baokaicong.android.bmusic.service.remoter.command.JumpCommand;
 import com.baokaicong.android.bmusic.service.remoter.command.NextCommand;
 import com.baokaicong.android.bmusic.service.remoter.command.PauseCommand;
 import com.baokaicong.android.bmusic.service.remoter.command.PlayCommand;
+import com.baokaicong.android.bmusic.service.remoter.command.PlayModeCommand;
 import com.baokaicong.android.bmusic.service.remoter.command.PreCommand;
 import com.baokaicong.android.bmusic.service.worker.MusicDownloadWorker;
 import com.baokaicong.android.bmusic.service.worker.Worker;
-import com.baokaicong.android.bmusic.ui.dialog.ListSelectDialog;
 import com.baokaicong.android.bmusic.ui.dialog.PlayListDialog;
 import com.baokaicong.android.bmusic.util.ToastUtil;
 import com.baokaicong.android.bmusic.util.sql.DownloadSQLUtil;
 
 import java.io.File;
-import java.util.List;
 
 public class MusicActivity extends AppCompatActivity {
     private ImageButton back,share;
@@ -85,8 +82,11 @@ public class MusicActivity extends AppCompatActivity {
         diskAnimation.setRepeatMode(ObjectAnimator.RESTART);// 循环模式
         diskAnimation.setInterpolator(new LinearInterpolator());
 
+        modeButton.setImageResource(getModeImage());
+
         globalMusicPlayListener=new BottomGlobalMusicPlayListener();
         BMContext.instance().registerListener(ListenerTag.MUSIC,globalMusicPlayListener);
+
 
 
         playButton.setOnClickListener((v)->{
@@ -122,11 +122,27 @@ public class MusicActivity extends AppCompatActivity {
             PopupMenu popupMenu = new PopupMenu(MusicActivity.this, modeButton);
             popupMenu.getMenuInflater().inflate(R.menu.dialog_mode_item, popupMenu.getMenu());
             popupMenu.show();
-
             popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                 @Override
                 public boolean onMenuItemClick(MenuItem item) {
-                    // 控件每一个item的点击事件
+                    PlayMode mode=null;
+                    int img=0;
+                    switch (item.getItemId()){
+                        case R.id.list:
+                            mode=PlayMode.LIST;
+                            img=R.drawable.icon_mode_list_30;
+                            break;
+                        case R.id.single:
+                            mode=PlayMode.REPEAT;
+                            img=R.drawable.icon_mode_repeate_30;
+                            break;
+                        case R.id.normal:
+                            mode=PlayMode.NORMAL;
+                            img=R.drawable.icon_mode_normal_30;
+                            break;
+                    }
+                    modeButton.setImageResource(img);
+                    BMContext.instance().getRemoter().command(new PlayModeCommand(),mode);
                     return true;
                 }
             });
@@ -155,7 +171,7 @@ public class MusicActivity extends AppCompatActivity {
         if(event.getKeyCode() == KeyEvent.KEYCODE_BACK){
             return super.onKeyDown(keyCode, event);
         }
-        return true;
+        return super.onKeyDown(keyCode, event);
     }
 
     @Override
@@ -164,6 +180,9 @@ public class MusicActivity extends AppCompatActivity {
         BMContext.instance().removeListener(ListenerTag.MUSIC,globalMusicPlayListener);
     }
 
+    /**
+     * 下载音乐
+     */
     private void downloadMP3(){
         Music music=BMContext.instance().getPlayInfo().getCurrentMusic();
         if(music!=null){
@@ -204,6 +223,11 @@ public class MusicActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 判断MP3是否本地存在
+     * @param music
+     * @return
+     */
     private boolean isMP3InfoExists(Music music){
         DownloadInfo info=downloadSQLUtil.getInfo(music.getMid());
         if(info==null){
@@ -280,5 +304,21 @@ public class MusicActivity extends AppCompatActivity {
 
     private String buildMusicFileName(Music music){
         return BMContext.instance().getDataRoot()+"Download/Music/"+music.getName()+" - "+music.getSinger()+"."+music.getSuffix();
+    }
+
+    private int getModeImage(){
+        int img=0;
+        switch (BMContext.instance().getPlayInfo().getMode()){
+            case LIST:
+                img=R.drawable.icon_mode_list_30;
+                break;
+            case REPEAT:
+                img=R.drawable.icon_mode_repeate_30;
+                break;
+            case NORMAL:
+                img=R.drawable.icon_mode_normal_30;
+                break;
+        }
+        return img;
     }
 }

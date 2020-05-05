@@ -154,7 +154,7 @@
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:layout_weight="1"
-                android:src="@drawable/icon_recycle_25"
+                android:src="@drawable/icon_mode_list_25"
                 android:background="@android:color/transparent"
                 android:scaleType="center" />
             <ImageView
