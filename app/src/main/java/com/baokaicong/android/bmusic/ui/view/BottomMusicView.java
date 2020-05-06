@@ -120,7 +120,11 @@ public class BottomMusicView extends LinearLayout {
         });
 
         listButton.setOnClickListener((v)->{
-            PlayListDialog dialog=PlayListDialog.builder(getContext());
+            PlayListDialog dialog=PlayListDialog.builder(getContext())
+                    .autoPlay(true)
+                    .title("播放列表")
+                    .create();
+            dialog.loadPlayList(BMContext.instance().getPlayInfo().getMusicList());
             dialog.show();
         });
         switchButton.setOnClickListener((v)->{

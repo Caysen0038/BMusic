@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.IBinder;
 
 import com.baokaicong.android.bmusic.bean.Music;
+import com.baokaicong.android.bmusic.bean.MusicSearchData;
 import com.baokaicong.android.bmusic.bean.Result;
 import com.baokaicong.android.bmusic.service.binder.CustomBinder;
 import com.baokaicong.android.bmusic.service.request.BaseCallback;
@@ -44,8 +45,8 @@ public class MusicService extends Service {
         super.onDestroy();
     }
 
-    public void search(String token, String keyword, RequestCallback<List<Music>> callback){
-        Call<Result<List<Music>>> call=musicAPI.search(token,keyword);
+    public void search(String token, String keyword,int current,int per, RequestCallback<MusicSearchData> callback){
+        Call<Result<MusicSearchData>> call=musicAPI.search(token,current,per,keyword);
         call.enqueue(new BaseCallback<>(callback));
     }
 

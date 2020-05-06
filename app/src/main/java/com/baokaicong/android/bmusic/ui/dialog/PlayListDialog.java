@@ -10,11 +10,16 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.TextView;
+
 import com.baokaicong.android.bmusic.BMContext;
 import com.baokaicong.android.bmusic.R;
 import com.baokaicong.android.bmusic.bean.Music;
 import com.baokaicong.android.bmusic.service.remoter.command.PlayCommand;
 import com.baokaicong.android.bmusic.ui.adapter.PlayListAdapter;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class PlayListDialog {
     private ListView listView;
@@ -22,27 +27,65 @@ public class PlayListDialog {
     private Context context;
     private View root;
     private boolean autoPlay=true;
-
+    private TextView titleView;
 
     private PlayListDialog(Context context){
         this.context=context;
     }
 
-    public static PlayListDialog builder(Context context){
-        PlayListDialog listSelectDialog=new PlayListDialog(context);
-        listSelectDialog.initView();
-        return listSelectDialog;
+    public static PlayListDialogBuilder builder(Context context){
+        return new PlayListDialogBuilder(context);
     }
 
-    private void initView(){
-        root = LayoutInflater.from(context).inflate(R.layout.dialog_list_select, null);
+    public static class PlayListDialogBuilder{
+        private Context context;
+        private List<Music> musicList;
+        private String title;
+        private boolean auto=true;
+        private AdapterView.OnItemClickListener listener;
+        public PlayListDialogBuilder(Context context){
+            this.context=context;
+            musicList=new ArrayList<>();
+        }
+        public PlayListDialogBuilder list(Music music){
+            this.musicList.add(music);
+            return this;
+        }
+
+        public PlayListDialogBuilder title(String text){
+            this.title=text;
+            return this;
+        }
+        public PlayListDialogBuilder autoPlay(boolean auto){
+            this.auto=auto;
+            return this;
+        }
+        public PlayListDialogBuilder listener(AdapterView.OnItemClickListener listener){
+            this.listener=listener;
+            return this;
+        }
+        public PlayListDialog create(){
+            PlayListDialog dialog=new PlayListDialog(context);
+            dialog.initView()
+                .loadPlayList(musicList)
+                .setTitile(title)
+                .setAutoPlay(auto);
+            if(listener!=null){
+                dialog.setOnItemClickListener(listener);
+            }
+            return dialog;
+        }
+    }
+
+    private PlayListDialog initView(){
+        root = LayoutInflater.from(context).inflate(R.layout.dialog_paly_list, null);
         listView=root.findViewById(R.id.item_list);
-        
+        titleView=root.findViewById(R.id.dialog_title);
         WindowManager windowManager = (WindowManager) context
                 .getSystemService(Context.WINDOW_SERVICE);
         Display display = windowManager.getDefaultDisplay();
         root.setMinimumWidth(display.getWidth());
-        dialog = new Dialog(context, com.baokaicong.android.cdialog.R.style.ActionSheetDialogStyle);
+        dialog = new Dialog(context, R.style.ActionSheetDialogStyle);
         dialog.setContentView(root);
         Window dialogWindow = dialog.getWindow();
         dialogWindow.setGravity(Gravity.LEFT | Gravity.BOTTOM);
@@ -50,11 +93,16 @@ public class PlayListDialog {
         lp.x = 0;
         lp.y = 0;
         dialogWindow.setAttributes(lp);
-        loadPlayList();
+        return this;
     }
 
-    private void loadPlayList(){
-        PlayListAdapter adapter=new PlayListAdapter(context, BMContext.instance().getPlayInfo().getMusicList().getList());
+    public PlayListDialog setTitile(String text){
+        titleView.setText(text);
+        return this;
+    }
+
+    public PlayListDialog loadPlayList(List<Music> list){
+        PlayListAdapter adapter=new PlayListAdapter(context, list);
         listView.setAdapter(adapter);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -66,6 +114,7 @@ public class PlayListDialog {
                 }
             }
         });
+        return this;
     }
 
     public PlayListDialog setOnItemClickListener(AdapterView.OnItemClickListener listener){

@@ -1,21 +1,21 @@
 package com.baokaicong.android.bmusic.bean;
 
+import androidx.annotation.Nullable;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.Accessors;
 
-@Data
+@Getter
+@Setter
 @Accessors(chain = true)
 public class MusicList {
     private String id;
     private List<Music> list;
     public MusicList(){
         list=new ArrayList<>();
-        id=System.currentTimeMillis()+"";
     }
 
     public int size(){
@@ -66,4 +66,16 @@ public class MusicList {
     public int getMusicPosition(Music music){
         return this.list.indexOf(music);
     }
+
+
+    @Override
+    public boolean equals(@Nullable Object obj) {
+        if(obj==null)
+            return false;
+        if(!(obj instanceof MusicList))
+            return false;
+        return ((MusicList)obj).getId().equals(this.id);
+    }
+
+
 }

@@ -13,50 +13,20 @@
         android:layout_height="60dp"
         android:orientation="horizontal"
         android:background="@color/colorPrimary"
+        android:gravity="center_vertical"
         >
-        <EditText
+        <androidx.appcompat.widget.SearchView
             android:id="@+id/search_input"
             android:layout_width="match_parent"
-            android:layout_height="30dp"
+            android:layout_height="40dp"
             android:background="@drawable/shape_search_input"
-            android:layout_weight="1"
-            android:paddingLeft="10dp"
-            android:paddingRight="10dp"
-            android:textSize="14sp"
-            android:textColor="@color/toolbarTextNormal"
-            android:layout_gravity="center_vertical"
-            android:layout_marginLeft="20dp"/>
-        <ImageButton
-            android:id="@+id/search_button"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:src="@drawable/icon_search_25"
-            android:foreground="?android:attr/selectableItemBackground"
-            android:background="@android:color/transparent"/>
-    </LinearLayout>
-    <LinearLayout
-        android:id="@+id/loading_view"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_marginTop="20dp"
-        android:visibility="gone">
-        <pl.droidsonroids.gif.GifImageView
-            android:id="@+id/login_button_gif"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:scaleType="fitXY"
-            android:src="@drawable/gif_loading"
-            android:layout_gravity="center_horizontal"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            app:searchIcon="@drawable/icon_search_25"
+            app:queryHint="歌名、歌手、专辑名"
+            app:iconifiedByDefault="false"
+            app:showAsAction="ifRoom|collapseActionView"
             />
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="搜索中"
-            android:textSize="18sp"
-            android:layout_marginTop="10dp"
-            android:textColor="@color/toolbarTextNormal"
-            android:layout_gravity="center"/>
     </LinearLayout>
 
     <ListView
@@ -65,4 +35,5 @@
         android:layout_height="match_parent"
         android:layout_weight="1"
         />
+
 </LinearLayout>

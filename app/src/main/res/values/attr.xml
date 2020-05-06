@@ -6,4 +6,9 @@
     <declare-styleable name="BottomMusicView">
         <attr name="mainColor" format="color"/>
     </declare-styleable>
+    <declare-styleable name="SheetItem">
+        <attr name="itemText" format="string"/>
+        <attr name="itemIcon" format="reference"/>
+        <attr name="itemTextColor" format="color"/>
+    </declare-styleable>
 </resources>

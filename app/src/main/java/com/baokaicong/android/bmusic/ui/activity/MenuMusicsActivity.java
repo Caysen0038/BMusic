@@ -53,7 +53,6 @@ public class MenuMusicsActivity extends AppCompatActivity {
     private ListView musicListView;
     private ServiceConnection musicMenuCon;
     private MenuService menuService;
-    private MediaRemoter remoter;
     private BottomMusicView bottomMusicView;
     private MusicMenuSQLUtil musicMenuSQLUtil;
 
@@ -68,12 +67,14 @@ public class MenuMusicsActivity extends AppCompatActivity {
         if(meid!=null){
             menu=musicMenuSQLUtil.getMenu(meid);
         }
+        musicList=new MusicList();
+        musicList.setId(meid);
+
         init();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     private void init(){
-        remoter=BMContext.instance().getRemoter();
         menuImg=findViewById(R.id.menu_img);
         menuName=findViewById(R.id.menu_name);
         menuOnwer=findViewById(R.id.menu_owner);
@@ -90,19 +91,19 @@ public class MenuMusicsActivity extends AppCompatActivity {
 
             @Override
             public void onServiceDisconnected(ComponentName name) {
-
+                menuService=null;
             }
         };
         bottomMusicView=findViewById(R.id.bottom_music_view);
         bottomMusicView.addBottomMusciListener(new BottomMusicView.BottomMusicListener() {
             @Override
             public void onPlay() {
-                remoter.command(new PlayCommand(),null);
+                BMContext.instance().getRemoter().command(new PlayCommand(),null);
             }
 
             @Override
             public void onPause() {
-                remoter.command(new PauseCommand(),null);
+                BMContext.instance().getRemoter().command(new PauseCommand(),null);
             }
 
             @Override
@@ -112,7 +113,7 @@ public class MenuMusicsActivity extends AppCompatActivity {
 
             @Override
             public void onSwitch(Music music) {
-                remoter.command(new NextCommand(),null);
+                BMContext.instance().getRemoter().command(new NextCommand(),null);
             }
         });
         Intent intent=new Intent(this, MenuService.class);
@@ -209,21 +210,20 @@ public class MenuMusicsActivity extends AppCompatActivity {
     }
 
     private void loadMusicList(List<Music> list){
-        Music[] musics=new Music[list.size()];
-        musicList=new MusicList();
-        int i=0;
+        musicList.clear();
         for(Music m:list){
-            musics[i++]=m;
             musicList.add(m);
         }
 
-        ListAdapter adapter=new MusicListAdapter(this,musics);
+        ListAdapter adapter=new MusicListAdapter(this,musicList.getList());
         musicListView.setAdapter(adapter);
     }
 
     private void loadAndPlay(Music music){
         MediaRemoter remoter=BMContext.instance().getRemoter();
-        remoter.command(new LoadListCommand(),musicList);
+        if(!this.musicList.getId().equals(BMContext.instance().getPlayInfo().getMusicListId())){
+            remoter.command(new LoadListCommand(),musicList);
+        }
         playMusic(music);
     }
 

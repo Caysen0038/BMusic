@@ -148,7 +148,11 @@ public class MusicActivity extends AppCompatActivity {
             });
         });
         songListButton.setOnClickListener((v)->{
-            PlayListDialog dialog=PlayListDialog.builder(this);
+            PlayListDialog dialog=PlayListDialog.builder(this)
+                    .autoPlay(true)
+                    .title("播放列表")
+                    .create();
+            dialog.loadPlayList(BMContext.instance().getPlayInfo().getMusicList());
             dialog.show();
         });
 

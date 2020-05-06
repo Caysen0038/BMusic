@@ -113,6 +113,7 @@ public class MusicPlayService extends Service implements MediaController<Music> 
         if(!mediaRunning)
             return;
         musicManager.loadList(list);
+        BMContext.instance().getPlayInfo().setMusicListId(list.getId());
     }
 
     @Override

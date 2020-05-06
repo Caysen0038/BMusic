@@ -5,7 +5,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import com.baokaicong.android.bmusic.R;
@@ -44,7 +43,7 @@ public class PlayListAdapter extends BaseAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         Item item=new Item();
-        convertView = layoutInflater.inflate(R.layout.item_play_list, null);
+        convertView = layoutInflater.inflate(R.layout.dialog_view_play_list_item, null);
         item.name=convertView.findViewById(R.id.item_name);
         item.delete=convertView.findViewById(R.id.item_delete);
         item.name.setText(musicsList.get(position).getName());

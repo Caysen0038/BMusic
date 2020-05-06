@@ -33,25 +33,17 @@ public class BootSplashActivity extends AppCompatActivity {
         setContentView(R.layout.activity_boot_splash);
         BMContext.instance().addActivity(NAME,this);
         handler=new Handler();
-//        BMContext.builder().removeActivity(NAME);
-//        Intent intent=new Intent(this,MainActivity.class);
-//        startActivity(intent);
-//        this.finish();
-
 
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                if (BMContext.instance().getUser() == null) {
-                    autoLogin();
-                } else {
-                    turnAcitivty(MainActivity.class);
-                }
+        new Thread(()-> {
+            if (BMContext.instance().getUser() == null) {
+                autoLogin();
+            } else {
+                turnAcitivty(MainActivity.class);
             }
         }).start();
     }
@@ -85,7 +77,9 @@ public class BootSplashActivity extends AppCompatActivity {
                 login(user);
             }
             @Override
-            public void onServiceDisconnected(ComponentName name) {}
+            public void onServiceDisconnected(ComponentName name) {
+                userService=null;
+            }
         };
         Intent intent=new Intent(this, UserService.class);
         bindService(intent, userCon,BIND_AUTO_CREATE);
@@ -103,8 +97,6 @@ public class BootSplashActivity extends AppCompatActivity {
                 user.setToken(result.getData());
                 BMContext.instance().setCurrentUser(user);
                 getUserInfo(user.getToken());
-                //
-
             }
             @Override
             public void handleError(Throwable t) {
@@ -122,7 +114,7 @@ public class BootSplashActivity extends AppCompatActivity {
 
             @Override
             public void handleError(Throwable t) {
-                ToastUtil.showText(BootSplashActivity.this,"请求用户信息错误");
+                ToastUtil.showText(BootSplashActivity.this,"网络貌似不畅通了~~");
                 turnAcitivty(MainActivity.class);
             }
         });

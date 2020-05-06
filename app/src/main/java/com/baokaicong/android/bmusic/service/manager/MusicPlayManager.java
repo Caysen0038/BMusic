@@ -1,22 +1,21 @@
 package com.baokaicong.android.bmusic.service.manager;
 
-import com.baokaicong.android.bmusic.BMContext;
 import com.baokaicong.android.bmusic.bean.Music;
 import com.baokaicong.android.bmusic.bean.MusicList;
 import com.baokaicong.android.bmusic.consts.PlayMode;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 public class MusicPlayManager {
-    private MusicList musicList;
+    private String musicListId;
+    private List<Music> musicList;
     private int current;
     private PlayMode mode;
     public MusicPlayManager(){
-        musicList=new MusicList();
+        musicList=new ArrayList<>();
         current=0;
         mode=PlayMode.LIST;
-
     }
 
     /**
@@ -40,7 +39,7 @@ public class MusicPlayManager {
             case 0:
 
             default:
-                musicList.add(music,i);
+                musicList.add(i,music);
                 break;
         }
 
@@ -135,11 +134,12 @@ public class MusicPlayManager {
      * @param list
      */
     public void loadList(MusicList list){
-        if(this.musicList==null || !this.musicList.getId().equals(list.getId())){
+        if(!list.getId().equals(this.musicListId)){
             this.musicList.clear();
             for(Music m:list.getList()){
                 this.musicList.add(m);
             }
+            this.musicListId=list.getId();
         }
     }
 
@@ -189,8 +189,7 @@ public class MusicPlayManager {
         return this.current;
     }
 
-    public MusicList getMusicList(){
-
+    public List<Music> getMusicList(){
         return this.musicList;
     }
 
@@ -199,6 +198,7 @@ public class MusicPlayManager {
     }
 
     public int getMusicPosition(Music music){
-        return this.musicList.getMusicPosition(music);
+        return this.musicList.indexOf(music);
     }
+
 }

@@ -149,5 +149,6 @@
     <orderEntry type="library" name="Gradle: com.yanzhenjie:permission:2.0.0-rc12@aar" level="project" />
     <orderEntry type="library" name="Gradle: pl.droidsonroids.gif:android-gif-drawable:1.2.6@aar" level="project" />
     <orderEntry type="module" module-name="BDialog" />
+    <orderEntry type="module" module-name="BDialog" />
   </component>
 </module>

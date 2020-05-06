@@ -35,7 +35,6 @@ public class LoginActivity extends AppCompatActivity {
     private UserService userService;
     private ServiceConnection userCon;
     private PropertySQLUtil propertySQLUtil;
-    private LoadingDialog loadingDialog;
     private EditText username,password;
     @Override
     protected void onCreate(Bundle bundle) {
@@ -54,12 +53,11 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
                 userService=((CustomBinder)service).getService();
-                Log.i("登录页面","绑定用户服务");
             }
 
             @Override
             public void onServiceDisconnected(ComponentName name) {
-
+                userService=null;
             }
         };
         Intent intent=new Intent(this,UserService.class);
@@ -86,14 +84,9 @@ public class LoginActivity extends AppCompatActivity {
     private void login(final User user){
         loading=true;
         switchLoginEvent();
-//        loadingDialog = new LoadingDialog(this);
-//        loadingDialog.setMessage("登陆ing");
-//        loadingDialog.setCanceledOnTouchOutside(false);
-//        loadingDialog.show();
         userService.login(user,new RequestCallback<String>() {
             @Override
             public void handleResult(Result<String> result) {
-                //loadingDialog.dismiss();
                 loading=false;
                 switchLoginEvent();
                 if(result==null || !result.getCode().equals("000000")) {
@@ -124,16 +117,12 @@ public class LoginActivity extends AppCompatActivity {
         userService.getUserInfo(token, new RequestCallback<AccountInfo>() {
             @Override
             public void handleResult(Result<AccountInfo> result) {
-                if(loadingDialog!=null)
-                    loadingDialog.dismiss();
                 BMContext.instance().getUser().setUserInfo(result.getData());
                 turn();
             }
 
             @Override
             public void handleError(Throwable t) {
-                if(loadingDialog!=null)
-                    loadingDialog.dismiss();
                 ToastUtil.showText(LoginActivity.this,"请求用户信息错误");
                 turn();
             }
@@ -151,10 +140,13 @@ public class LoginActivity extends AppCompatActivity {
         if(loading){
             findViewById(R.id.login_button_text).setVisibility(View.GONE);
             findViewById(R.id.login_button_gif).setVisibility(View.VISIBLE);
-
+            username.setEnabled(false);
+            password.setEnabled(false);
         }else{
             findViewById(R.id.login_button_text).setVisibility(View.VISIBLE);
             findViewById(R.id.login_button_gif).setVisibility(View.GONE);
+            username.setEnabled(true);
+            password.setEnabled(true);
         }
     }
 
@@ -172,7 +164,6 @@ public class LoginActivity extends AppCompatActivity {
             return true;
         }
         if (event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
-            // 设置两秒内连续两次back则退出
             if ((System.currentTimeMillis() - DOUBLE_CLICK_TIME) > 2000) {
                 ToastUtil.showText(LoginActivity.this, "再按一次退出");
                 DOUBLE_CLICK_TIME = System.currentTimeMillis();
@@ -211,6 +202,8 @@ public class LoginActivity extends AppCompatActivity {
         if(propertySQLUtil !=null){
             propertySQLUtil.close();
         }
-        unbindService(userCon);
+        if(userService!=null){
+            unbindService(userCon);
+        }
     }
 }
