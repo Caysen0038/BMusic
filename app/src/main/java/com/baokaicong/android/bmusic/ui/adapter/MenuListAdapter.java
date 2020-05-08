@@ -11,8 +11,10 @@ import android.widget.TextView;
 import com.baokaicong.android.bmusic.R;
 import com.baokaicong.android.bmusic.bean.MusicMenu;
 
+import java.util.List;
+
 public class MenuListAdapter extends BaseAdapter {
-    private MusicMenu[] musicMenus;
+    private List<MusicMenu> musicMenuList;
     private Context context;
     private LayoutInflater layoutInflater;
     private class Item{
@@ -20,19 +22,19 @@ public class MenuListAdapter extends BaseAdapter {
         public TextView name;
         public TextView count;
     }
-    public MenuListAdapter(Context context, MusicMenu[] musicMenus){
-        this.musicMenus=musicMenus;
+    public MenuListAdapter(Context context, List<MusicMenu> musicMenus){
+        this.musicMenuList=musicMenus;
         this.context=context;
         layoutInflater=LayoutInflater.from(context);
     }
     @Override
     public int getCount() {
-        return musicMenus.length;
+        return musicMenuList.size();
     }
 
     @Override
     public Object getItem(int position) {
-        return musicMenus[position];
+        return musicMenuList.get(position);
     }
 
     @Override
@@ -47,8 +49,8 @@ public class MenuListAdapter extends BaseAdapter {
         item.icon=convertView.findViewById(R.id.music_menu_icon);
         item.name=convertView.findViewById(R.id.music_menu_name);
         item.count=convertView.findViewById(R.id.music_menu_count);
-        item.name.setText(musicMenus[position].getName());
-        item.count.setText(musicMenus[position].getCount()+"首");
+        item.name.setText(musicMenuList.get(position).getName());
+        item.count.setText(musicMenuList.get(position).getCount()+"首");
         return convertView;
     }
 }

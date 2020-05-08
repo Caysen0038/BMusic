@@ -201,4 +201,16 @@ public class MusicPlayManager {
         return this.musicList.indexOf(music);
     }
 
+    public String getMusicListId(){
+        return this.musicListId;
+    }
+
+    public void setCurrentMusic(Music music){
+        if (contains(music)) {
+            this.current=getMusicPosition(music);
+        }else{
+            insertMusic(music,0);
+            this.current=0;
+        }
+    }
 }

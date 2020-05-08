@@ -24,6 +24,7 @@ import com.baokaicong.android.bmusic.bean.Music;
 import com.baokaicong.android.bmusic.bean.MusicList;
 import com.baokaicong.android.bmusic.bean.MusicMenu;
 import com.baokaicong.android.bmusic.bean.Result;
+import com.baokaicong.android.bmusic.consts.Strings;
 import com.baokaicong.android.bmusic.service.MenuService;
 import com.baokaicong.android.bmusic.service.binder.CustomBinder;
 import com.baokaicong.android.bmusic.service.remoter.MediaRemoter;
@@ -171,28 +172,35 @@ public class MenuMusicsActivity extends AppCompatActivity {
      * 刷新内容
      */
     private void refreshContent(){
-        if(menuService ==null){
-            return;
+        List<Music> list=BMContext.instance().getMenuMusics(menu.getMeid());
+        if(list==null){
+            ToastUtil.showText(this, Strings.DATA_LOADING);
+        }else{
+            loadMusicList(list);
         }
-        menuService.getMenuMusics(BMContext.instance().getUser().getToken(), menu.getMeid(),
-                new RequestCallback<List<Music>>() {
-                    @Override
-                    public void handleResult(Result<List<Music>> result) {
-                        if(result==null)
-                            return;
-                        List<Music> list=result.getData();
-                        if(list!=null && list.size()>0){
-                            loadMusicList(list);
-                        }
-                        refreshFinished();
-                    }
-
-                    @Override
-                    public void handleError(Throwable t) {
-                        ToastUtil.showText(MenuMusicsActivity.this,"加载歌曲列表出错");
-                        refreshFinished();
-                    }
-                });
+        refreshFinished();
+//        if(menuService ==null){
+//            return;
+//        }
+//        menuService.getMenuMusics(BMContext.instance().getUser().getToken(), menu.getMeid(),
+//                new RequestCallback<List<Music>>() {
+//                    @Override
+//                    public void handleResult(Result<List<Music>> result) {
+//                        if(result==null)
+//                            return;
+//                        List<Music> list=result.getData();
+//                        if(list!=null && list.size()>0){
+//                            loadMusicList(list);
+//                        }
+//                        refreshFinished();
+//                    }
+//
+//                    @Override
+//                    public void handleError(Throwable t) {
+//                        ToastUtil.showText(MenuMusicsActivity.this,"加载歌曲列表出错");
+//                        refreshFinished();
+//                    }
+//                });
     }
 
     /**

@@ -14,7 +14,7 @@ import com.baokaicong.android.bmusic.R;
 import com.baokaicong.android.bmusic.bean.Result;
 import com.baokaicong.android.bmusic.bean.User;
 import com.baokaicong.android.bmusic.bean.AccountInfo;
-import com.baokaicong.android.bmusic.consts.SettingField;
+import com.baokaicong.android.bmusic.consts.PropertyField;
 import com.baokaicong.android.bmusic.service.UserService;
 import com.baokaicong.android.bmusic.service.binder.CustomBinder;
 import com.baokaicong.android.bmusic.service.request.RequestCallback;
@@ -58,8 +58,8 @@ public class BootSplashActivity extends AppCompatActivity {
 
     private void autoLogin(){
         PropertySQLUtil propertySQLUtil =new PropertySQLUtil(this);
-        String name= propertySQLUtil.getProperty(SettingField.USER_NAME);
-        String password= propertySQLUtil.getProperty(SettingField.USER_PASSWORD);
+        String name= propertySQLUtil.getProperty(PropertyField.USER_NAME);
+        String password= propertySQLUtil.getProperty(PropertyField.USER_PASSWORD);
         if(name==null || name.length()==0 || password==null || password.length()==0){
             turnAcitivty(LoginActivity.class);
         }else{

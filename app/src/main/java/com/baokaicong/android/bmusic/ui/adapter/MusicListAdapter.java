@@ -12,6 +12,7 @@ import android.widget.TextView;
 import com.baokaicong.android.bmusic.R;
 import com.baokaicong.android.bmusic.bean.Music;
 import com.baokaicong.android.bmusic.bean.MusicMenu;
+import com.baokaicong.android.bmusic.util.StringUtil;
 
 import java.util.List;
 
@@ -22,7 +23,8 @@ public class MusicListAdapter extends BaseAdapter {
     private class Item{
         public TextView name;
         public TextView singer;
-        public Button addButton;
+        public TextView duration;
+        public TextView length;
     }
     public MusicListAdapter(Context context, List<Music> musics){
         this.musicList=musics;
@@ -50,8 +52,12 @@ public class MusicListAdapter extends BaseAdapter {
         convertView = layoutInflater.inflate(R.layout.item_menu_music, null);
         item.name=convertView.findViewById(R.id.music_name);
         item.singer=convertView.findViewById(R.id.music_singer);
+        item.duration=convertView.findViewById(R.id.music_duration);
+        item.length=convertView.findViewById(R.id.music_length);
         item.name.setText(musicList.get(position).getName());
         item.singer.setText(musicList.get(position).getSinger());
+        item.duration.setText(StringUtil.parseTime(musicList.get(position).getDuration()));
+        item.length.setText(StringUtil.parseFileLength(musicList.get(position).getSize()));
         return convertView;
     }
 

@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.EditText;
@@ -17,7 +16,7 @@ import com.baokaicong.android.bmusic.bean.Result;
 import com.baokaicong.android.bmusic.bean.User;
 import com.baokaicong.android.bmusic.bean.AccountInfo;
 import com.baokaicong.android.bmusic.consts.IntentTag;
-import com.baokaicong.android.bmusic.consts.SettingField;
+import com.baokaicong.android.bmusic.consts.PropertyField;
 import com.baokaicong.android.bmusic.service.binder.CustomBinder;
 import com.baokaicong.android.bmusic.service.UserService;
 import com.baokaicong.android.bmusic.service.request.RequestCallback;
@@ -25,7 +24,6 @@ import com.baokaicong.android.bmusic.ui.activity.setting.NetSettingActivity;
 import com.baokaicong.android.bmusic.util.BEAUtil;
 import com.baokaicong.android.bmusic.util.ToastUtil;
 import com.baokaicong.android.bmusic.util.sql.PropertySQLUtil;
-import com.baokaicong.android.cdialog.widget.dialog.LoadingDialog;
 
 
 public class LoginActivity extends AppCompatActivity {
@@ -68,8 +66,8 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        String name=getIntent().getStringExtra(SettingField.USER_NAME);
-        String pass=getIntent().getStringExtra(SettingField.USER_PASSWORD);
+        String name=getIntent().getStringExtra(PropertyField.USER_NAME);
+        String pass=getIntent().getStringExtra(PropertyField.USER_PASSWORD);
         username.setText(name);
         password.setText(pass);
     }
@@ -97,8 +95,8 @@ public class LoginActivity extends AppCompatActivity {
                 user.setToken(result.getData());
                 // 保存
                 String pass= BEAUtil.BEA(user.getPassword(),user.getName());
-                propertySQLUtil.insertProperty(SettingField.USER_NAME,user.getName());
-                propertySQLUtil.insertProperty(SettingField.USER_PASSWORD,pass);
+                propertySQLUtil.insertProperty(PropertyField.USER_NAME,user.getName());
+                propertySQLUtil.insertProperty(PropertyField.USER_PASSWORD,pass);
                 BMContext.instance().setCurrentUser(user);
                 getUserInfo(user.getToken());
             }

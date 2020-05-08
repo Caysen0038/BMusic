@@ -1,5 +1,6 @@
 package com.baokaicong.android.bmusic.bean;
 
+import com.baokaicong.android.bmusic.consts.Device;
 import com.baokaicong.android.bmusic.consts.PlayMode;
 
 import java.util.List;
@@ -14,4 +15,6 @@ public class PlayInfo {
     private List<Music> musicList;
     private PlayMode mode;
     private String MusicListId;
+    private Device device= Device.PHONE;
+    private boolean interrupt;
 }

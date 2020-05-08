@@ -1,22 +1,36 @@
 package com.baokaicong.android.bmusic.service;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.media.AudioManager;
+import android.media.MediaRouter;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
+import android.util.Log;
+import android.widget.RemoteViews;
 
 import androidx.annotation.RequiresApi;
+import androidx.core.app.NotificationCompat;
+import androidx.media.session.MediaButtonReceiver;
 
 import com.baokaicong.android.bmusic.BMContext;
+import com.baokaicong.android.bmusic.R;
 import com.baokaicong.android.bmusic.bean.DownloadInfo;
 import com.baokaicong.android.bmusic.bean.Music;
 import com.baokaicong.android.bmusic.bean.MusicList;
 import com.baokaicong.android.bmusic.consts.ListenerTag;
 import com.baokaicong.android.bmusic.consts.PlayMode;
+import com.baokaicong.android.bmusic.consts.PropertyField;
 import com.baokaicong.android.bmusic.service.listener.GlobalMusicPlayListener;
 import com.baokaicong.android.bmusic.service.manager.MusicPlayManager;
 import com.baokaicong.android.bmusic.service.remoter.MediaController;
@@ -24,15 +38,26 @@ import com.baokaicong.android.bmusic.service.player.StandardMusicPlayer;
 import com.baokaicong.android.bmusic.service.player.MusicPlayer;
 import com.baokaicong.android.bmusic.service.remoter.MusicRemoter;
 import com.baokaicong.android.bmusic.service.remoter.MediaRemoter;
+import com.baokaicong.android.bmusic.ui.activity.MainActivity;
+import com.baokaicong.android.bmusic.util.GsonUtil;
 import com.baokaicong.android.bmusic.util.ToastUtil;
 import com.baokaicong.android.bmusic.util.sql.DownloadSQLUtil;
+import com.baokaicong.android.bmusic.util.sql.PropertySQLUtil;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class MusicPlayService extends Service implements MediaController<Music> {
+    private static final String NOTIFICATION_CHANNEL_ID="BM_19951102";
+    private static final int NOTIFICATION_ID=951102;
+    private static final String RECEIVER_REMOTE_ACTION="com.baokaicong.music.receiver.remote";
     // 播放器
     private MusicPlayer musicPlayer;
     // 播放管理器
@@ -51,9 +76,13 @@ public class MusicPlayService extends Service implements MediaController<Music> 
     private ServiceMusicPlayerListener musicPlayerListener;
 
     private ServicePhoneStateListener phoneStateListener;
-
+    private boolean open=false;
     private boolean watching=false;
 
+    private Notification notification;
+    private RemoteViews notificationViews;
+    private NotificationManager notificationManager;
+    private PropertySQLUtil propertySQLUtil;
 
     @Override
     public void onCreate() {
@@ -69,12 +98,15 @@ public class MusicPlayService extends Service implements MediaController<Music> 
                 PhoneStateListener.LISTEN_CALL_STATE);
 
         downloadSQLUtil=new DownloadSQLUtil(this);
-    }
+        propertySQLUtil=new PropertySQLUtil(this);
 
+        initNotification();
+    }
 
     @Override
     public IBinder onBind(Intent intent) {
         MusicBinder musicBinder=new MusicBinder(this.remoter);
+
         return musicBinder;
     }
 
@@ -83,10 +115,60 @@ public class MusicPlayService extends Service implements MediaController<Music> 
         super.unbindService(conn);
     }
 
-
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         return super.onStartCommand(intent, flags, startId);
+    }
+
+    private void initNotification(){
+        notificationManager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+        NotificationChannel channel =null;
+        notificationViews=new RemoteViews(getPackageName(), R.layout.notification_main_control);
+        // 点击显示主页面
+        Intent intent=new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        notificationViews.setOnClickPendingIntent(R.id.notification_container,pendingIntent);
+        // 下一首
+        intent=new Intent(RECEIVER_REMOTE_ACTION);
+        intent.putExtra("remote","next");
+        pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        notificationViews.setOnClickPendingIntent(R.id.notification_next,pendingIntent);
+        // 上一首
+        intent=new Intent(RECEIVER_REMOTE_ACTION);
+        intent.putExtra("remote","pre");
+        pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        notificationViews.setOnClickPendingIntent(R.id.notification_pre,pendingIntent);
+        // 播放暂停
+        intent=new Intent(RECEIVER_REMOTE_ACTION);
+        intent.putExtra("remote","play");
+        pendingIntent = PendingIntent.getBroadcast(this, NOTIFICATION_ID, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        notificationViews.setOnClickPendingIntent(R.id.notification_play,pendingIntent);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            channel =new NotificationChannel(NOTIFICATION_CHANNEL_ID, "BMusic", NotificationManager.IMPORTANCE_HIGH);
+            notificationManager.createNotificationChannel(channel);
+            notification = new Notification.Builder(this)
+                    .setChannelId(NOTIFICATION_CHANNEL_ID)
+                    .setCustomContentView(notificationViews)
+                    .setSmallIcon(R.drawable.icon_bm_trans_32)
+                    .setOngoing(true)
+                    .setPriority(Notification.PRIORITY_MAX)
+                    .build();
+        } else {
+            NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
+                    .setChannelId(NOTIFICATION_CHANNEL_ID)
+                    .setCustomContentView(notificationViews)
+                    .setSmallIcon(R.drawable.icon_bm_trans_32)
+                    .setPriority(Notification.PRIORITY_MAX)
+                    .setOngoing(true);
+            notification = notificationBuilder.build();
+        }
+        refreshNotification();
+    }
+
+    private void refreshNotification(){
+        notificationManager.notify(NOTIFICATION_ID, notification);
     }
 
     @Override
@@ -98,6 +180,8 @@ public class MusicPlayService extends Service implements MediaController<Music> 
         BMContext.instance().getPlayInfo().setMusicList(musicManager.getMusicList());
         BMContext.instance().getPlayInfo().setMode(musicManager.getPlayMode());
         watchProgress();
+        loadHistory();
+        open=false;
     }
 
     @Override
@@ -106,6 +190,9 @@ public class MusicPlayService extends Service implements MediaController<Music> 
         musicPlayer.removeMusicPlayerListner(this.musicPlayerListener);
         musicPlayer.release();
         progressTimer.cancel();
+        saveHistoryMusic();
+        saveHistoryList();
+        open=false;
     }
 
     @Override
@@ -114,6 +201,7 @@ public class MusicPlayService extends Service implements MediaController<Music> 
             return;
         musicManager.loadList(list);
         BMContext.instance().getPlayInfo().setMusicListId(list.getId());
+        saveHistoryList();
     }
 
     @Override
@@ -232,7 +320,7 @@ public class MusicPlayService extends Service implements MediaController<Music> 
             musicPlayer.loadMedia(m,false);
             ToastUtil.showText(this,"播放网络音乐");
         }
-
+        saveHistoryMusic();
     }
 
     /**
@@ -270,6 +358,80 @@ public class MusicPlayService extends Service implements MediaController<Music> 
         }
     }
 
+    /**
+     * 加载播放历史
+     */
+    private void loadHistory(){
+        String str=propertySQLUtil.getProperty(PropertyField.LAST_MUSIC_LIST);
+        Log.i("播放列表",str);
+        if(str!=null){
+            try{
+                JsonObject json= (JsonObject) new JsonParser().parse(str);
+                List<Music> list=new ArrayList<>();
+                List<String> listjson=GsonUtil.builder().fromJson(
+                        json.getAsJsonPrimitive("list").getAsString(),
+                        ArrayList.class);
+                for(int i=0;i<listjson.size();i++){
+                    list.add(GsonUtil.builder().fromJson(
+                            GsonUtil.builder().toJson(listjson.get(i)),
+                            Music.class));
+                }
+                String id=GsonUtil.builder().fromJson(
+                        json.getAsJsonPrimitive("id").getAsString(),
+                        String.class);
+                MusicList musicList=new MusicList();
+                musicList.setList(list);
+                musicList.setId(id);
+                load(musicList);
+            }catch (Exception e){
+                Log.i("播放列表","加载错误");
+                e.printStackTrace();
+            }
+
+        }
+        str=propertySQLUtil.getProperty(PropertyField.LAST_MUSIC);
+        Log.i("播放音乐",str);
+        if(str!=null){
+            try{
+                Music music=GsonUtil.builder().fromJson(str, Music.class);
+                musicManager.setCurrentMusic(music);
+                loadMusic(music,false);
+            }catch (Exception e){
+                Log.i("播放音乐","加载错误");
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * 保存历史列表
+     */
+    private void saveHistoryList(){
+        new Thread(()->{
+            List<Music> list=musicManager.getMusicList();
+            if(list!=null){
+                String id=musicManager.getMusicListId();
+                JsonObject json=new JsonObject();
+                json.addProperty("id",id);
+                json.addProperty("list",GsonUtil.builder().toJson(list));
+                propertySQLUtil.insertProperty(PropertyField.LAST_MUSIC_LIST, json.toString());
+            }
+        }).start();
+
+    }
+
+    /**
+     * 保存历史音乐
+     */
+    private void saveHistoryMusic(){
+        new Thread(()->{
+            Music current=musicManager.getCurrentMusic();
+            if(current!=null){
+                propertySQLUtil.insertProperty(PropertyField.LAST_MUSIC, GsonUtil.builder().toJson(current));
+            }
+        }).start();
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onDestroy() {
@@ -280,7 +442,13 @@ public class MusicPlayService extends Service implements MediaController<Music> 
         if(downloadSQLUtil!=null){
             downloadSQLUtil.close();
         }
-
+        if(propertySQLUtil!=null){
+            if(open){
+                saveHistoryList();
+                saveHistoryMusic();
+            }
+            propertySQLUtil.close();
+        }
     }
 
 
@@ -329,23 +497,23 @@ public class MusicPlayService extends Service implements MediaController<Music> 
     }
 
     /**
-     * 通话状态监听
+     * 通话状态监听器
      */
     private class ServicePhoneStateListener extends PhoneStateListener {
-        private boolean interrupt=false;
         @Override
         public void onCallStateChanged(int state, String phoneNumber) {
             switch(state){
                 case TelephonyManager.CALL_STATE_IDLE:  // 闲置
-                    if(interrupt){
+                    if(BMContext.instance().getPlayInfo().isInterrupt()){
                         play();
+                        BMContext.instance().getPlayInfo().setInterrupt(false);
                     }
                     break;
                 case TelephonyManager.CALL_STATE_RINGING:  // 响铃
 
                 case TelephonyManager.CALL_STATE_OFFHOOK:  // 接听
                     if(BMContext.instance().getPlayInfo().isPlaying()){
-                        interrupt=true;
+                        BMContext.instance().getPlayInfo().setInterrupt(true);
                         pause();
                     }
                     break;
@@ -378,6 +546,8 @@ public class MusicPlayService extends Service implements MediaController<Music> 
                 listener.onPlay(music);
             }
         }
+        notificationViews.setImageViewResource(R.id.notification_play,android.R.drawable.ic_media_pause);
+        refreshNotification();
     }
 
     /**
@@ -392,6 +562,8 @@ public class MusicPlayService extends Service implements MediaController<Music> 
                 listener.onPause(music);
             }
         }
+        notificationViews.setImageViewResource(R.id.notification_play,android.R.drawable.ic_media_play);
+        refreshNotification();
     }
 
     /**
@@ -419,5 +591,8 @@ public class MusicPlayService extends Service implements MediaController<Music> 
                 listener.onSwitch(music);
             }
         }
+        notificationViews.setTextViewText(R.id.notification_music,music.getName());
+        notificationViews.setTextViewText(R.id.notification_singer,music.getSinger());
+        refreshNotification();
     }
 }

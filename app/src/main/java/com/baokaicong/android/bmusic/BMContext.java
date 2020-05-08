@@ -20,6 +20,7 @@ import java.util.Map;
 public class BMContext {
 
     private Map<String, Activity> activityMap;
+    private Map<String,List<Music>> musicMap;
     private String dataRoot;
     private User user;
     private int version=1;
@@ -39,6 +40,7 @@ public class BMContext {
         dataRoot=Environment.getExternalStorageDirectory().getPath()+File.separator+"BKC/";
         listenerMap=new HashMap<>();
         playInfo=new PlayInfo();
+        musicMap=new HashMap<>();
         return this;
     }
     private static class Holder{
@@ -176,6 +178,33 @@ public class BMContext {
 
     public PlayInfo getPlayInfo(){
         return this.playInfo;
+    }
+
+    public void addMenuMusics(String meid,List<Music> list){
+        synchronized (musicMap){
+            if(!musicMap.containsKey(meid)){
+                musicMap.put(meid,new ArrayList<>());
+            }
+            List<Music> tempList=musicMap.get(meid);
+            tempList.clear();
+            for(Music m:list){
+                tempList.add(m);
+            }
+        }
+
+    }
+
+    public List<Music> getMenuMusics(String meid){
+//        if(musicMap.containsKey(meid)){
+        synchronized (musicMap){
+            return musicMap.get(meid);
+        }
+
+//        }else{
+//            List<Music> list=new ArrayList<>();
+//            musicMap.put(meid,list);
+//            return list;
+//        }
     }
 
 }

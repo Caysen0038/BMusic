@@ -33,6 +33,7 @@ import com.baokaicong.android.bmusic.service.remoter.command.PreCommand;
 import com.baokaicong.android.bmusic.service.worker.MusicDownloadWorker;
 import com.baokaicong.android.bmusic.service.worker.Worker;
 import com.baokaicong.android.bmusic.ui.dialog.PlayListDialog;
+import com.baokaicong.android.bmusic.util.StringUtil;
 import com.baokaicong.android.bmusic.util.ToastUtil;
 import com.baokaicong.android.bmusic.util.sql.DownloadSQLUtil;
 
@@ -275,7 +276,7 @@ public class MusicActivity extends AppCompatActivity {
             musicName.setText(music.getName());
             musicSinger.setText(music.getSinger());
             startTime.setText("0:00");
-            endTime.setText(parseTime(music.getDuration()));
+            endTime.setText(StringUtil.parseTime(music.getDuration()));
             progressBar.setMax(music.getDuration());
             progressBar.setProgress(0);
             playing=false;
@@ -287,24 +288,13 @@ public class MusicActivity extends AppCompatActivity {
             handler.post(new Runnable() {
                 @Override
                 public void run() {
-                    startTime.setText(parseTime(p));
+                    startTime.setText(StringUtil.parseTime(p));
                 }
             });
 
         }
     }
 
-
-    private String parseTime(int n){
-        int m=n/60;
-        int s=n%50;
-        if(s<10){
-            return m+":0"+s;
-        }else{
-            return m+":"+s;
-        }
-
-    }
 
     private String buildMusicFileName(Music music){
         return BMContext.instance().getDataRoot()+"Download/Music/"+music.getName()+" - "+music.getSinger()+"."+music.getSuffix();

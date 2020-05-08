@@ -2,7 +2,7 @@ package com.baokaicong.android.bmusic.service.request;
 
 import android.content.Context;
 
-import com.baokaicong.android.bmusic.consts.SettingField;
+import com.baokaicong.android.bmusic.consts.PropertyField;
 import com.baokaicong.android.bmusic.util.sql.PropertySQLUtil;
 
 import java.util.concurrent.TimeUnit;
@@ -56,8 +56,8 @@ public class RequestUtil {
 
     public String baseURL(Context context){
         PropertySQLUtil util=new PropertySQLUtil(context);
-        String host=util.getProperty(SettingField.HOST_ADDRESS);
-        String port=util.getProperty(SettingField.HOST_PORT);
+        String host=util.getProperty(PropertyField.HOST_ADDRESS);
+        String port=util.getProperty(PropertyField.HOST_PORT);
         if(host==null || port==null){
             return baseURL;
         }

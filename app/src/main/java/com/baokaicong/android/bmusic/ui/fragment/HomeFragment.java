@@ -1,5 +1,6 @@
 package com.baokaicong.android.bmusic.ui.fragment;
 
+import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.content.ComponentName;
 import android.content.Context;
@@ -12,6 +13,8 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.LinearInterpolator;
 import android.widget.AdapterView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -22,8 +25,10 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.baokaicong.android.bmusic.BMContext;
 import com.baokaicong.android.bmusic.R;
+import com.baokaicong.android.bmusic.bean.Music;
 import com.baokaicong.android.bmusic.bean.MusicMenu;
 import com.baokaicong.android.bmusic.bean.Result;
+import com.baokaicong.android.bmusic.consts.Strings;
 import com.baokaicong.android.bmusic.service.MenuService;
 import com.baokaicong.android.bmusic.service.binder.CustomBinder;
 import com.baokaicong.android.bmusic.service.request.RequestCallback;
@@ -43,11 +48,13 @@ import com.google.gson.Gson;
 import android.content.Intent;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
 public class HomeFragment extends BFragment {
     private View root;
+    private List<MusicMenu> musicMenuList;
     private ListView menuList;
     private SwipeRefreshLayout swipeRefreshLayout;
     private Handler handler;
@@ -63,6 +70,8 @@ public class HomeFragment extends BFragment {
     private ImageButton addMenuButton;
     private IconButton syncMenuButton;
     private TextView musicDownloadCount;
+    private ObjectAnimator refreshAnimator;
+    private boolean animationStopping=false;
     public HomeFragment() {
         handler=new Handler();
     }
@@ -73,11 +82,13 @@ public class HomeFragment extends BFragment {
         musicMenuSQLUtil =new MusicMenuSQLUtil(getContext());
         downloadSQLUtil=new DownloadSQLUtil(getContext());
         propertySQLUtil=new PropertySQLUtil(getContext());
+        musicMenuList=new ArrayList<>();
+
         musicMenuCon=new ServiceConnection(){
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
                 menuService =((CustomBinder)service).getService();
-                refreshContent();
+                syncMenu();
             }
             @Override
             public void onServiceDisconnected(ComponentName name) {
@@ -98,13 +109,8 @@ public class HomeFragment extends BFragment {
         musicDownloadCount=root.findViewById(R.id.music_download_count);
         initSwipeRefreshLayout();
         initMusicMenuView();
+
         return root;
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-
     }
 
     /**
@@ -134,6 +140,8 @@ public class HomeFragment extends BFragment {
         syncMenuButton=root.findViewById(R.id.sync_menu_button);
         syncMenuButton.setOnClickListener((v)->{syncMenu();});
         menuList=root.findViewById(R.id.music_menu_list);
+        this.menuAdapter=new MenuListAdapter(getContext(), this.musicMenuList);
+        menuList.setAdapter(menuAdapter);
         menuList.setOnScrollChangeListener(new View.OnScrollChangeListener() {
             @Override
             public void onScrollChange(View v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
@@ -160,15 +168,44 @@ public class HomeFragment extends BFragment {
                 return true;
             }
         });
+
+        refreshAnimator=ObjectAnimator.ofFloat(syncMenuButton.findViewById(R.id.icon),"rotation",0,360);
+        refreshAnimator.setDuration(1500);//设定转一圈的时间
+        refreshAnimator.setRepeatCount(Animation.INFINITE);//设定无限循环
+        refreshAnimator.setRepeatMode(ObjectAnimator.RESTART);// 循环模式
+        refreshAnimator.setInterpolator(new LinearInterpolator());
+        // 添加监听器监听动画重复事件，保证动画优雅结束
+        refreshAnimator.addListener(new Animator.AnimatorListener() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+                animationStopping=false;
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animation) {
+                // 保证动画优雅的结束，每次结束动画都会回到原点
+                if(animationStopping){
+                    animation.cancel();
+                }
+            }
+        });
     }
 
 
     @Override
     public void resume() {
         usernameText.setText(BMContext.instance().getUser().getUserInfo().getName());
-        if(menuService!=null){
-            refreshContent();
-        }
+        refreshContent();
     }
 
     @Override
@@ -200,50 +237,90 @@ public class HomeFragment extends BFragment {
         }
     }
 
+    private void syncPrepare(){
+
+        refreshAnimator.start();
+    }
+    private void syncComplete(){
+        // 不调用stop，让监听器优雅结束
+        animationStopping=true;
+    }
+    private boolean checkMusicsSyncState(){
+        for(MusicMenu menu:musicMenuList){
+            if(BMContext.instance().getMenuMusics(menu.getMeid())==null){
+                return false;
+            }
+        }
+        return true;
+    }
     /**
      * 同步歌单
      */
     private void syncMenu(){
-        ObjectAnimator animator=ObjectAnimator.ofFloat(syncMenuButton.findViewById(R.id.icon),"rotation",0,360*3);
-        animator.setDuration(1400);
-        animator.start();
+        syncPrepare();
         menuService.syncMenus(BMContext.instance().getUser().getToken(), new RequestCallback<List<MusicMenu>>() {
             @Override
             public void handleResult(Result<List<MusicMenu>> result) {
-                //
-                if(result==null){
-                    ToastUtil.showText(getContext(),"歌单数据错误");
-                    return;
-                }
-                switch (result.getCode()){
-                    case "000000":
+//                if(result==null){
+//                    ToastUtil.showText(getContext(),Strings.DATA_LOAD_ERROR);
+//                    return;
+//                }
+//                switch (result.getCode()){
+//                    case "000000":
                         refreshContent();
-                        break;
-                    case "100000":
-                        ToastUtil.showText(getContext(),"歌单数据错误");
-                        return;
-                }
-                //animator.end();
+                        syncMenuMusics();
+//                        break;
+//                    case "100000":
+//                        ToastUtil.showText(getContext(),Strings.DATA_LOAD_ERROR);
+//                        return;
+//                }
+
             }
 
             @Override
             public void handleError(Throwable t) {
-                ToastUtil.showText(getContext(),"歌单请求错误");
-                //animator.end();
+                ToastUtil.showText(getContext(), Strings.NET_ERROR);
+                syncComplete();
             }
         });
     }
 
+    private void syncMenuMusics(){
+        syncPrepare();
+        for(MusicMenu menu:musicMenuList){
+            menuService.getMenuMusics(BMContext.instance().getUser().getToken(), menu.getMeid(),
+                    new RequestCallback<List<Music>>() {
+                        @Override
+                        public void handleResult(Result<List<Music>> result) {
+//                            if(result==null)
+//                                return;
+                            List<Music> list=result.getData();
+//                            if(list!=null){
+                            BMContext.instance().addMenuMusics(menu.getMeid(),list);
+//                            }
+                            if(checkMusicsSyncState()){
+                                syncComplete();
+                            }
+                        }
 
+                        @Override
+                        public void handleError(Throwable t) {
+                            ToastUtil.showText(getContext(),Strings.NET_ERROR);
+                            BMContext.instance().addMenuMusics(menu.getMeid(),new ArrayList<>());
+                            if(checkMusicsSyncState()){
+                                syncComplete();
+                            }
+                        }
+                    });
+        }
+    }
 
     private void loadMusicMenu(List<MusicMenu> list){
-        MusicMenu[] menu=new MusicMenu[list.size()];
-        int i=0;
+        musicMenuList.clear();
         for(MusicMenu m:list){
-            menu[i++]=m;
+            this.musicMenuList.add(m);
         }
-        this.menuAdapter=new MenuListAdapter(getContext(), menu);
-        menuList.setAdapter(menuAdapter);
+        this.menuAdapter.notifyDataSetChanged();
     }
 
     /**
@@ -252,9 +329,14 @@ public class HomeFragment extends BFragment {
      */
     private void menuItemClick(int p){
         MusicMenu menu= (MusicMenu) menuAdapter.getItem(p);
-        Intent intent=new Intent(getContext(), MenuMusicsActivity.class);
-        intent.putExtra("meid",menu.getMeid());
-        startActivity(intent);
+        if(BMContext.instance().getMenuMusics(menu.getMeid())!=null){
+            Intent intent=new Intent(getContext(), MenuMusicsActivity.class);
+            intent.putExtra("meid",menu.getMeid());
+            startActivity(intent);
+        }else{
+            ToastUtil.showText(getContext(),Strings.MENU_LOADING);
+        }
+
     }
 
     /**

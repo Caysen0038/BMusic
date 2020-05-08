@@ -7,7 +7,7 @@ import android.widget.EditText;
 import androidx.appcompat.app.AppCompatActivity;
 import com.baokaicong.android.bmusic.BMContext;
 import com.baokaicong.android.bmusic.R;
-import com.baokaicong.android.bmusic.consts.SettingField;
+import com.baokaicong.android.bmusic.consts.PropertyField;
 import com.baokaicong.android.bmusic.util.sql.PropertySQLUtil;
 
 public class NetSettingActivity extends AppCompatActivity {
@@ -27,8 +27,8 @@ public class NetSettingActivity extends AppCompatActivity {
     private void initView(){
         hostEdit=findViewById(R.id.net_host_edit);
         portEdit=findViewById(R.id.net_port_edit);
-        oldHost= propertySQLUtil.getProperty(SettingField.HOST_ADDRESS);
-        oldPort= propertySQLUtil.getProperty(SettingField.HOST_PORT);
+        oldHost= propertySQLUtil.getProperty(PropertyField.HOST_ADDRESS);
+        oldPort= propertySQLUtil.getProperty(PropertyField.HOST_PORT);
         hostEdit.setText(oldHost);
         portEdit.setText(oldPort);
     }
@@ -73,10 +73,10 @@ public class NetSettingActivity extends AppCompatActivity {
         String host=hostEdit.getText().toString();
         String port=portEdit.getText().toString();
         if(!host.equals(oldHost)){
-            propertySQLUtil.updateProperty(SettingField.HOST_ADDRESS,host);
+            propertySQLUtil.updateProperty(PropertyField.HOST_ADDRESS,host);
         }
         if(!port.equals(oldPort)){
-            propertySQLUtil.updateProperty(SettingField.HOST_PORT,port);
+            propertySQLUtil.updateProperty(PropertyField.HOST_PORT,port);
         }
         BMContext.instance().removeActivity(NAME);
         finish();

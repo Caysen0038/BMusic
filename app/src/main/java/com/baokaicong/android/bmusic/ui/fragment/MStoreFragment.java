@@ -1,10 +1,6 @@
 package com.baokaicong.android.bmusic.ui.fragment;
 
-import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
 
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -14,14 +10,14 @@ import android.view.ViewGroup;
 import com.baokaicong.android.bmusic.R;
 
 
-public class NewsFragment extends BFragment {
+public class MStoreFragment extends BFragment {
 
-    public NewsFragment() {
+    public MStoreFragment() {
 
     }
 
-    public static NewsFragment newInstance(String param1, String param2) {
-        NewsFragment fragment = new NewsFragment();
+    public static MStoreFragment newInstance(String param1, String param2) {
+        MStoreFragment fragment = new MStoreFragment();
 
         return fragment;
     }
@@ -36,7 +32,7 @@ public class NewsFragment extends BFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        return inflater.inflate(R.layout.fragment_news, container, false);
+        return inflater.inflate(R.layout.fragment_mstore, container, false);
     }
 
     @Override

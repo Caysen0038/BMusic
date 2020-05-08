@@ -27,7 +27,7 @@
             android:layout_height="30dp"
             android:text="unlasting"
             android:gravity="center_vertical"
-            android:textSize="20sp"
+            android:textSize="18sp"
             android:singleLine="true"
             android:textColor="@color/textWhiteNormal"/>
         <TextView
@@ -40,10 +40,24 @@
             android:singleLine="true"
             android:textColor="@color/textWhiteNormal"/>
     </LinearLayout>
-    <ImageView
-        android:layout_width="40dp"
+    <LinearLayout
+        android:layout_width="60dp"
         android:layout_height="match_parent"
-        android:scaleType="center"
-        android:src="@drawable/icon_menu_music_20"
-        />
+        android:orientation="vertical"
+        android:layout_marginRight="5dp">
+        <TextView
+            android:id="@+id/music_duration"
+            android:layout_width="match_parent"
+            android:layout_height="35dp"
+            android:gravity="center_vertical|right"
+            android:textSize="12sp"
+            android:textColor="@color/textWhiteNormal"/>
+        <TextView
+            android:id="@+id/music_length"
+            android:layout_width="match_parent"
+            android:layout_height="35dp"
+            android:gravity="center_vertical|right"
+            android:textSize="12sp"
+            android:textColor="@color/textWhiteNormal"/>
+    </LinearLayout>
 </LinearLayout>

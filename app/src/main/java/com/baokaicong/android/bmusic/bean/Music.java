@@ -21,6 +21,7 @@ public class Music {
     private String singer;
     private String aldum;
     private int duration;
+    private long size;
     private String suffix;
     private String url;
 
