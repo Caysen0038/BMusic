@@ -32,6 +32,7 @@ import com.baokaicong.android.bmusic.bean.MusicMenu;
 import com.baokaicong.android.bmusic.bean.MusicSearchData;
 import com.baokaicong.android.bmusic.bean.Page;
 import com.baokaicong.android.bmusic.bean.Result;
+import com.baokaicong.android.bmusic.consts.Strings;
 import com.baokaicong.android.bmusic.service.MenuService;
 import com.baokaicong.android.bmusic.service.MusicService;
 import com.baokaicong.android.bmusic.service.UserService;
@@ -262,11 +263,14 @@ public class SearchActivity extends AppCompatActivity {
                         @Override
                         public void handleResult(Result<Boolean> result) {
                             if (result == null || !result.getCode().equals("000000") || !result.getData()) {
-                                ToastUtil.showText(SearchActivity.this, "添加失败");
+                                ToastUtil.showText(SearchActivity.this, Strings.MENU_ADD_MUSIC_FAIL);
                             } else {
-
-                                ToastUtil.showText(SearchActivity.this, "添加成功");
+                                ToastUtil.showText(SearchActivity.this, Strings.MENU_ADD_MUSIC_SUCCESS);
                                 updateMenuCount(menu, 1);
+                                List<Music> list=BMContext.instance().getMenuMusics(menu.getMeid());
+                                if(list!=null){
+                                    list.add(0,music);
+                                }
                             }
 
                         }

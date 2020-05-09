@@ -14,4 +14,12 @@ public class Strings {
     public static final String DATA_LOADING="数据正在吃命加载中~~";
 
     public static final String MENU_LOADING="歌单吃命同步中,小主喝口水再试试~~";
+
+    public static final String MENU_ADD_MUSIC_SUCCESS="它被你纳入怀中啦~~";
+
+    public static final String MENU_ADD_MUSIC_FAIL="小主的请求貌似被拒绝了~~";
+
+    public static final String MENU_DROP_MUSIC_SUCCESS="它已回到那诗与远方~~";
+
+    public static final String MENU_DROP_MUSIC_FAIL="它拒绝离开小主您呢~~";
 }

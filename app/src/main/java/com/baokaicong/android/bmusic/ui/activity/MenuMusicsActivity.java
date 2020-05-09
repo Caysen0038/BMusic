@@ -256,23 +256,25 @@ public class MenuMusicsActivity extends AppCompatActivity {
         menuService.dropMusic(BMContext.instance().getUser().getToken(),menu.getMeid(), music.getMid(), new RequestCallback<Boolean>() {
             @Override
             public void handleResult(Result<Boolean> result) {
-                if(result==null || !result.getCode().equals("000000")){
-                    ToastUtil.showText(MenuMusicsActivity.this,"删除失败");
+                if(result==null || !result.getCode().equals("000000") || !result.getData()){
+                    ToastUtil.showText(MenuMusicsActivity.this,Strings.MENU_DROP_MUSIC_FAIL);
                     return;
                 }
                 if(result.getData()){
-                    ToastUtil.showText(MenuMusicsActivity.this,music.getName()+"已移除");
+                    ToastUtil.showText(MenuMusicsActivity.this,Strings.MENU_DROP_MUSIC_SUCCESS);
                     menu.setCount(menu.getCount()-1);
                     musicMenuSQLUtil.updateMenu(menu);
+                    List<Music> list=BMContext.instance().getMenuMusics(menu.getMeid());
+                    if(list!=null){
+                        list.remove(music);
+                    }
                     refreshContent();
-                }else{
-                    ToastUtil.showText(MenuMusicsActivity.this,music.getName()+"未能移除");
                 }
             }
 
             @Override
             public void handleError(Throwable t) {
-                ToastUtil.showText(MenuMusicsActivity.this,"服务器异常");
+                ToastUtil.showText(MenuMusicsActivity.this,Strings.NET_ERROR);
             }
         });
     }
