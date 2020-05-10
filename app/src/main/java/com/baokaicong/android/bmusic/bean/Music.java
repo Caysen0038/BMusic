@@ -24,6 +24,7 @@ public class Music {
     private long size;
     private String suffix;
     private String url;
+    private String img;
 
     @Override
     public boolean equals(@Nullable Object obj) {

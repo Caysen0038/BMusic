@@ -17,4 +17,5 @@ public class PlayInfo {
     private String MusicListId;
     private Device device= Device.PHONE;
     private boolean interrupt;
+    private boolean localMusic;
 }

@@ -195,16 +195,9 @@ public class BMContext {
     }
 
     public List<Music> getMenuMusics(String meid){
-//        if(musicMap.containsKey(meid)){
         synchronized (musicMap){
             return musicMap.get(meid);
         }
-
-//        }else{
-//            List<Music> list=new ArrayList<>();
-//            musicMap.put(meid,list);
-//            return list;
-//        }
     }
 
 }

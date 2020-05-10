@@ -34,16 +34,14 @@ import com.baokaicong.android.bmusic.service.binder.CustomBinder;
 import com.baokaicong.android.bmusic.service.request.RequestCallback;
 import com.baokaicong.android.bmusic.ui.activity.MenuMusicsActivity;
 import com.baokaicong.android.bmusic.ui.adapter.MenuListAdapter;
+import com.baokaicong.android.bmusic.ui.dialog.ConfirmDialog;
+import com.baokaicong.android.bmusic.ui.dialog.InputDialog;
+import com.baokaicong.android.bmusic.ui.dialog.SheetDialog;
 import com.baokaicong.android.bmusic.ui.view.IconButton;
 import com.baokaicong.android.bmusic.util.sql.DownloadSQLUtil;
 import com.baokaicong.android.bmusic.util.sql.MusicMenuSQLUtil;
 import com.baokaicong.android.bmusic.util.ToastUtil;
 import com.baokaicong.android.bmusic.util.sql.PropertySQLUtil;
-import com.baokaicong.android.cdialog.consts.SheetItemColor;
-import com.baokaicong.android.cdialog.widget.dialog.bDialog.BActionSheetDialog;
-import com.baokaicong.android.cdialog.widget.dialog.bDialog.BAlertDialog;
-import com.baokaicong.android.cdialog.widget.dialog.bDialog.BAlertInputDialog;
-import com.google.gson.Gson;
 
 import android.content.Intent;
 import android.widget.TextView;
@@ -88,7 +86,7 @@ public class HomeFragment extends BFragment {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
                 menuService =((CustomBinder)service).getService();
-                syncMenu();
+                syncMenu(true);
             }
             @Override
             public void onServiceDisconnected(ComponentName name) {
@@ -138,7 +136,7 @@ public class HomeFragment extends BFragment {
         addMenuButton=root.findViewById(R.id.add_menu_button);
         addMenuButton.setOnClickListener((v)->{createMenu();});
         syncMenuButton=root.findViewById(R.id.sync_menu_button);
-        syncMenuButton.setOnClickListener((v)->{syncMenu();});
+        syncMenuButton.setOnClickListener((v)->{syncMenu(true);});
         menuList=root.findViewById(R.id.music_menu_list);
         this.menuAdapter=new MenuListAdapter(getContext(), this.musicMenuList);
         menuList.setAdapter(menuAdapter);
@@ -238,12 +236,12 @@ public class HomeFragment extends BFragment {
     }
 
     private void syncPrepare(){
-
         refreshAnimator.start();
     }
     private void syncComplete(){
         // 不调用stop，让监听器优雅结束
         animationStopping=true;
+        refreshContent();
     }
     private boolean checkMusicsSyncState(){
         for(MusicMenu menu:musicMenuList){
@@ -256,25 +254,16 @@ public class HomeFragment extends BFragment {
     /**
      * 同步歌单
      */
-    private void syncMenu(){
+    private void syncMenu(boolean syncMusics){
         syncPrepare();
         menuService.syncMenus(BMContext.instance().getUser().getToken(), new RequestCallback<List<MusicMenu>>() {
             @Override
             public void handleResult(Result<List<MusicMenu>> result) {
-//                if(result==null){
-//                    ToastUtil.showText(getContext(),Strings.DATA_LOAD_ERROR);
-//                    return;
-//                }
-//                switch (result.getCode()){
-//                    case "000000":
-                        refreshContent();
-                        syncMenuMusics();
-//                        break;
-//                    case "100000":
-//                        ToastUtil.showText(getContext(),Strings.DATA_LOAD_ERROR);
-//                        return;
-//                }
-
+                if(syncMusics){
+                    syncMenuMusics();
+                }else{
+                    syncComplete();
+                }
             }
 
             @Override
@@ -349,81 +338,78 @@ public class HomeFragment extends BFragment {
     }
 
     private void openMusicMenuDialog(MusicMenu menu){
-        BActionSheetDialog dialog = new BActionSheetDialog(getContext()).builder().setTitle("请选择");
-        dialog.addSheetItem("播放列表", null, (w)-> { playMenu(menu); })
-                .addSheetItem("下载", null,(w)-> { downloadMenu(menu);})
-                .addSheetItem("重命名", null, (w)->{renameMenu(menu);})
-                .addSheetItem("删除", SheetItemColor.Red,(w)-> { deleteMenu(menu);});
-        dialog.show();
+        SheetDialog selectDialog= new SheetDialog(getContext());
+        selectDialog.addItem("播放列表",android.R.drawable.ic_media_play, (v)->{ playMenu(menu);;})
+                .addItem("下载",android.R.drawable.ic_menu_save,(v)->{ downloadMenu(menu);})
+                .addItem("重命名",android.R.drawable.ic_menu_manage,(v)->{renameMenu(menu);})
+                .addItem("删除",android.R.drawable.ic_menu_delete,(v)->{deleteMenu(menu);})
+                .setTitle("请选择~~")
+                .show();
     }
 
     private void renameMenu(MusicMenu menu){
-        final BAlertInputDialog inputDialog= new BAlertInputDialog(getContext()).builder()
-                .setTitle("歌单名称")
-                .setEditHint("请输入歌单名");
-        inputDialog.setNegativeButton("取消", (v)-> { inputDialog.dismiss(); })
-                .setPositiveButton("确认", (v)-> {
-                    inputDialog.dismiss();
+        final InputDialog dialog=new InputDialog(getContext());
+        dialog.setTitle("歌单名称")
+                .setEditHint("请输入歌单名")
+                .setCancelButton("取消",(v)->{dialog.dismiss();})
+                .setConfirmButton("确认",(v)->{
+                    dialog.dismiss();
                     menuService.renameMenu(BMContext.instance().getUser().getToken(),
-                            menu.getMeid(), inputDialog.getResult(), new RequestCallback<Boolean>() {
+                            menu.getMeid(), dialog.getInputData(), new RequestCallback<Boolean>() {
                                 @Override
                                 public void handleResult(Result<Boolean> result) {
                                     refreshContent();
                                 }
-
                                 @Override
                                 public void handleError(Throwable t) {
-                                    ToastUtil.showText(getContext(),"网络貌似不通畅~~");
+                                    ToastUtil.showText(getContext(),Strings.NET_ERROR);
                                 }
                             });
-                });
-        inputDialog.show();
+                })
+                .show();
     }
 
     private void deleteMenu(MusicMenu menu){
-        BAlertDialog myAlertDialog = new BAlertDialog(getContext()).builder()
-                .setTitle("确认删除该歌单吗？")
-                .setMsg("删除"+menu.getName())
-                .setPositiveButton("确认", (v)-> {
+        final ConfirmDialog dialog=new ConfirmDialog(getContext());
+        dialog.setTitle("确认删除该歌单吗？")
+                .setContent("删除"+menu.getName())
+                .setCancelButton("放弃",(v)->{dialog.dismiss();})
+                .setConfirmButton("删除",(v)->{
+                    dialog.dismiss();
                     menuService.dropMenu(BMContext.instance().getUser().getToken(),
                             menu.getMeid(), new RequestCallback<Boolean>() {
                                 @Override
                                 public void handleResult(Result<Boolean> result) {
                                     refreshContent();
                                 }
-
                                 @Override
                                 public void handleError(Throwable t) {
-                                    ToastUtil.showText(getContext(),"网络貌似不通畅~~");
+                                    ToastUtil.showText(getContext(),Strings.NET_ERROR);
                                 }
                             });
                 })
-                .setNegativeButton("取消",(v) ->{ return; });
-        myAlertDialog.show();
+                .show();
     }
 
     private void createMenu(){
-        final BAlertInputDialog inputDialog= new BAlertInputDialog(getContext()).builder()
-                .setTitle("歌单名称")
-                .setEditHint("请输入歌单名");
-
-        inputDialog.setNegativeButton("取消", (v)-> { inputDialog.dismiss(); })
-                .setPositiveButton("确认", (v)-> {
-                    inputDialog.dismiss();
+        final InputDialog dialog=new InputDialog(getContext());
+        dialog.setTitle("歌单名称")
+                .setEditHint("请输入歌单名")
+                .setCancelButton("取消",(v)->{dialog.dismiss();})
+                .setConfirmButton("添加",(v)->{
+                    dialog.dismiss();
                     menuService.createMenu(BMContext.instance().getUser().getToken(),
-                            inputDialog.getResult(), new RequestCallback<Boolean>() {
+                            dialog.getInputData(), new RequestCallback<Boolean>() {
                                 @Override
                                 public void handleResult(Result<Boolean> result) {
-                                    syncMenu();
+                                    syncMenu(false);
                                 }
-
                                 @Override
                                 public void handleError(Throwable t) {
-                                    ToastUtil.showText(getContext(),"网络貌似不通畅~~");
+                                    ToastUtil.showText(getContext(),Strings.NET_ERROR);
                                 }
                             });
-                });
-        inputDialog.show();
+                }).show();
     }
 
     private void playMenu(MusicMenu menu){

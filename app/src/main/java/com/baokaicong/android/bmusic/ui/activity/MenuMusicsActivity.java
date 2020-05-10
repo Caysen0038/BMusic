@@ -34,12 +34,10 @@ import com.baokaicong.android.bmusic.service.remoter.command.PauseCommand;
 import com.baokaicong.android.bmusic.service.remoter.command.PlayCommand;
 import com.baokaicong.android.bmusic.service.request.RequestCallback;
 import com.baokaicong.android.bmusic.ui.adapter.MusicListAdapter;
+import com.baokaicong.android.bmusic.ui.dialog.SheetDialog;
 import com.baokaicong.android.bmusic.ui.view.BottomMusicView;
 import com.baokaicong.android.bmusic.util.ToastUtil;
 import com.baokaicong.android.bmusic.util.sql.MusicMenuSQLUtil;
-import com.baokaicong.android.cdialog.consts.SheetItemColor;
-import com.baokaicong.android.cdialog.widget.dialog.bDialog.BActionSheetDialog;
-import com.google.gson.Gson;
 
 import java.util.List;
 
@@ -243,10 +241,12 @@ public class MenuMusicsActivity extends AppCompatActivity {
     }
 
     private void selectMusic(Music music){
-        BActionSheetDialog dialog = new BActionSheetDialog(this).builder().setTitle("请选择");
-        dialog.addSheetItem("立即播放", null, (w)-> { playMusic(music); })
-                .addSheetItem("删除", SheetItemColor.Red, (w)->{removeMusic(music);});
-        dialog.show();
+        SheetDialog selectDialog= new SheetDialog(this);
+        selectDialog.addItem("立即播放",android.R.drawable.ic_media_play, (v)->{ playMusic(music);})
+                .addItem("收藏",R.drawable.icon_uncollect_30,(v)->{})
+                .addItem("删除",android.R.drawable.ic_menu_delete,(v)->{removeMusic(music);})
+                .setTitle("请选择~~")
+                .show();
     }
 
     private void removeMusic(Music music){

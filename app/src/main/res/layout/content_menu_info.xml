@@ -9,7 +9,7 @@
         android:layout_width="120dp"
         android:layout_height="120dp"
         android:layout_gravity="center_vertical"
-        android:layout_marginLeft="40dp"
+        android:layout_marginLeft="20dp"
         android:src="@drawable/icon_disk_default"
         android:background="@android:color/transparent"/>
     <LinearLayout
@@ -25,14 +25,16 @@
             android:text="歌单名"
             android:textColor="@color/textWhiteAccent"
             android:textSize="24sp"
-            android:textStyle="bold"/>
+            android:textStyle="bold"
+            android:singleLine="true"/>
         <TextView
             android:id="@+id/menu_owner"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="by caysen"
+            android:text="创建者"
             android:textSize="18sp"
             android:textColor="@color/textWhiteNormal"
-            android:layout_marginTop="15dp"/>
+            android:layout_marginTop="15dp"
+            android:singleLine="true"/>
     </LinearLayout>
 </LinearLayout>

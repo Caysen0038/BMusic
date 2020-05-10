@@ -17,9 +17,8 @@ import com.baokaicong.android.bmusic.ui.view.dialog.SheetItem;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SheetDialog {
+public class SheetDialog extends Dialog{
     private LinearLayout itemContainer;
-    private Dialog dialog;
     private Context context;
     private View root;
     private SheetItem cancelItem;
@@ -27,59 +26,9 @@ public class SheetDialog {
 
 
     public SheetDialog(Context context){
+        super(context,R.style.ActionSheetDialogStyle);
         this.context=context;
-    }
-
-    public static SheetDialogBuilder builder(Context context){
-        return new SheetDialogBuilder(context);
-    }
-
-    public static class SheetDialogBuilder{
-        private Context context;
-        private List<SheetItem> list;
-        private String title="请选择";
-        private SheetDialogBuilder(Context context){
-            this.context=context;
-            list=new ArrayList<>();
-        }
-
-        public SheetDialogBuilder item(String text, View.OnClickListener listener){
-            return item(text,-1,-1,listener);
-        }
-        public SheetDialogBuilder item(String text, int icon, View.OnClickListener listener){
-            return item(text,icon,-1,listener);
-        }
-        public SheetDialogBuilder item(String text, int icon, int textColor, View.OnClickListener listener){
-            SheetItem item=new SheetItem(context);
-            item.setText(text);
-            if(icon!=-1){
-                item.setIcon(icon);
-            }
-            if(textColor!=-1){
-                item.setTextColor(textColor);
-            }
-            if(listener!=null){
-                item.setOnClickListener(listener);
-            }
-            list.add(item);
-            return this;
-        }
-
-        public SheetDialogBuilder title(String title){
-            this.title=title;
-            return this;
-        }
-
-        public SheetDialog create(){
-            SheetDialog dialog=new SheetDialog(context);
-            dialog.initView();
-            if(list.size()>0){
-                dialog.loadItem(list);
-            }
-            dialog.setTitle(title);
-            return dialog;
-        }
-
+        initView();
     }
 
     private void initView(){
@@ -91,26 +40,38 @@ public class SheetDialog {
                 .getSystemService(Context.WINDOW_SERVICE);
         Display display = windowManager.getDefaultDisplay();
         root.setMinimumWidth(display.getWidth());
-        dialog = new Dialog(context, R.style.ActionSheetDialogStyle);
-        dialog.setContentView(root);
-        Window dialogWindow = dialog.getWindow();
+        setContentView(root);
+        Window dialogWindow = getWindow();
         dialogWindow.setGravity(Gravity.LEFT | Gravity.BOTTOM);
         WindowManager.LayoutParams lp = dialogWindow.getAttributes();
         lp.x = 0;
         lp.y = 0;
         dialogWindow.setAttributes(lp);
-
         cancelItem.setIcon(android.R.drawable.ic_menu_close_clear_cancel);
         cancelItem.setOnClickListener((v)->{
             dismiss();
         });
     }
 
+    public SheetDialog addItem(String text, View.OnClickListener listener){
+        return addItem(text,0,0,listener);
+    }
 
-    public SheetDialog loadItem(List<SheetItem> list){
-        for(SheetItem item:list){
-            itemContainer.addView(item);
+    public SheetDialog addItem(String text, int imgId, View.OnClickListener listener){
+        return addItem(text,imgId,0,listener);
+    }
+
+    public SheetDialog addItem(String text, int imgId,int textColor, View.OnClickListener listener){
+        SheetItem item=new SheetItem(context);
+        item.setText(text);
+        if(imgId>0){
+            item.setIcon(imgId);
         }
+        if(textColor>0){
+            item.setTextColor(textColor);
+        }
+        item.setOnClickListener(new DialogClickListener(listener));
+        itemContainer.addView(item);
         return this;
     }
 
@@ -119,21 +80,28 @@ public class SheetDialog {
         return this;
     }
 
-    public void show(){
-        if (dialog != null) {
-            dialog.show();
-        }
+    @Override
+    public void show() {
+        super.show();
     }
 
-    public void dismiss(){
-        try {
-            if (dialog != null && dialog.isShowing()) {
-                dialog.dismiss();
+    @Override
+    public void dismiss() {
+        super.dismiss();
+    }
+
+    private class DialogClickListener implements View.OnClickListener{
+        private View.OnClickListener listener;
+        public DialogClickListener(View.OnClickListener listener){
+            this.listener=listener;
+        }
+
+        @Override
+        public void onClick(View v) {
+            dismiss();
+            if(listener!=null){
+                listener.onClick(v);
             }
-            dialog = null;
-        } catch (Exception e) {
-
         }
     }
-
 }

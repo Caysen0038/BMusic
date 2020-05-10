@@ -83,6 +83,7 @@ public class MusicPlayService extends Service implements MediaController<Music> 
     private RemoteViews notificationViews;
     private NotificationManager notificationManager;
     private PropertySQLUtil propertySQLUtil;
+    private boolean localMusic=false;
 
     @Override
     public void onCreate() {
@@ -147,17 +148,18 @@ public class MusicPlayService extends Service implements MediaController<Music> 
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             channel =new NotificationChannel(NOTIFICATION_CHANNEL_ID, "BMusic", NotificationManager.IMPORTANCE_HIGH);
+            channel.setSound(null,null);
             notificationManager.createNotificationChannel(channel);
             notification = new Notification.Builder(this)
                     .setChannelId(NOTIFICATION_CHANNEL_ID)
                     .setCustomContentView(notificationViews)
                     .setSmallIcon(R.drawable.icon_bm_trans_32)
                     .setOngoing(true)
+                    .setDefaults(NotificationCompat.FLAG_ONLY_ALERT_ONCE)
                     .setPriority(Notification.PRIORITY_MAX)
                     .build();
         } else {
             NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
-                    .setChannelId(NOTIFICATION_CHANNEL_ID)
                     .setCustomContentView(notificationViews)
                     .setSmallIcon(R.drawable.icon_bm_trans_32)
                     .setPriority(Notification.PRIORITY_MAX)
@@ -315,10 +317,10 @@ public class MusicPlayService extends Service implements MediaController<Music> 
         String path=isMP3InfoExists(m);
         if(path!=null){
             musicPlayer.loadMedia(path,false);
-            ToastUtil.showText(this,"播放本地音乐");
+            BMContext.instance().getPlayInfo().setLocalMusic(true);
         }else{
             musicPlayer.loadMedia(m,false);
-            ToastUtil.showText(this,"播放网络音乐");
+            BMContext.instance().getPlayInfo().setLocalMusic(false);
         }
         saveHistoryMusic();
     }
@@ -410,10 +412,12 @@ public class MusicPlayService extends Service implements MediaController<Music> 
         new Thread(()->{
             List<Music> list=musicManager.getMusicList();
             if(list!=null){
+                Music[] musics=new Music[list.size()];
+                musics=list.toArray(musics);
                 String id=musicManager.getMusicListId();
                 JsonObject json=new JsonObject();
                 json.addProperty("id",id);
-                json.addProperty("list",GsonUtil.builder().toJson(list));
+                json.addProperty("list",GsonUtil.builder().toJson(musics));
                 propertySQLUtil.insertProperty(PropertyField.LAST_MUSIC_LIST, json.toString());
             }
         }).start();

@@ -22,4 +22,8 @@ public class Strings {
     public static final String MENU_DROP_MUSIC_SUCCESS="它已回到那诗与远方~~";
 
     public static final String MENU_DROP_MUSIC_FAIL="它拒绝离开小主您呢~~";
+
+    public static final String MUSIC_STATUS_LOCAL="这是本地音乐哟~~";
+
+    public static final String MUSIC_STATUS_NET="这是云音乐哟~~";
 }

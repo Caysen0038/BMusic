@@ -11,8 +11,7 @@
         android:layout_height="25dp"
         android:scaleType="fitCenter"
         android:src="@drawable/icon_song_list_30"
-        android:layout_marginLeft="10dp"
-        android:tint="@color/imgTintBlue"/>
+        android:layout_marginLeft="10dp" />
     <TextView
         android:id="@+id/item_text"
         android:layout_weight="1"

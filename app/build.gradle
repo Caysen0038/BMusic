@@ -56,7 +56,6 @@ dependencies {
     implementation 'org.projectlombok:lombok:1.16.8'  //添加lombok依赖
     implementation 'org.glassfish:javax.annotation:10.0-b28' //java注解
 
-    implementation project(":BDialog")
 
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     testImplementation 'junit:junit:4.12'

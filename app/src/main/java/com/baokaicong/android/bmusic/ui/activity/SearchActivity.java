@@ -241,42 +241,39 @@ public class SearchActivity extends AppCompatActivity {
 
     private SheetDialog selectDialog;
     private void selectMusic(final Music music){
-        selectDialog=SheetDialog.builder(this)
-                .item("立即播放",android.R.drawable.ic_media_play, (v)->{ selectDialog.dismiss();playMusic(music);})
-                .item("添加至歌单",android.R.drawable.ic_menu_add,(v)->{ selectDialog.dismiss();addToMenu(music);})
-                .title("请选择~~")
-                .create();
-        selectDialog.show();
+        selectDialog=new SheetDialog(this);
+        selectDialog.addItem("立即播放",android.R.drawable.ic_media_play, (v)->{ playMusic(music);})
+                .addItem("收藏",R.drawable.icon_uncollect_30,(v)->{})
+                .addItem("添加至歌单",android.R.drawable.ic_menu_add,(v)->{ addToMenu(music);})
+                .setTitle("请选择~~")
+                .show();
     }
 
     private void addToMenu(Music music){
-        ListSelectDialog.ListSelectDialogBuilder builder=ListSelectDialog.builder(this);
+        ListSelectDialog dialog=new ListSelectDialog(this);
         for(int i=0;i<menuList.size();i++){
-            builder.item(menuList.get(i).getName());
-        }
-        final ListSelectDialog dialog= builder.title("我的歌单").create();
-        dialog.setOnItemClickListener((parent,view,p,id)-> {
-            MusicMenu menu = menuList.get(p);
-            dialog.dismiss();
-            menuService.addMusic(BMContext.instance().getUser().getToken(), menu.getMeid(), music.getMid(),
-                    new BaseRequestCallback<Boolean>(SearchActivity.this) {
-                        @Override
-                        public void handleResult(Result<Boolean> result) {
-                            if (result == null || !result.getCode().equals("000000") || !result.getData()) {
-                                ToastUtil.showText(SearchActivity.this, Strings.MENU_ADD_MUSIC_FAIL);
-                            } else {
-                                ToastUtil.showText(SearchActivity.this, Strings.MENU_ADD_MUSIC_SUCCESS);
-                                updateMenuCount(menu, 1);
-                                List<Music> list=BMContext.instance().getMenuMusics(menu.getMeid());
-                                if(list!=null){
-                                    list.add(0,music);
+            final MusicMenu menu=menuList.get(i);
+            dialog.addItem(menuList.get(i).getName(), R.drawable.icon_bm,(v)->{
+                menuService.addMusic(BMContext.instance().getUser().getToken(), menu.getMeid(), music.getMid(),
+                        new BaseRequestCallback<Boolean>(SearchActivity.this) {
+                            @Override
+                            public void handleResult(Result<Boolean> result) {
+                                if (result == null || !result.getCode().equals("000000") || !result.getData()) {
+                                    ToastUtil.showText(SearchActivity.this, Strings.MENU_ADD_MUSIC_FAIL);
+                                } else {
+                                    ToastUtil.showText(SearchActivity.this, Strings.MENU_ADD_MUSIC_SUCCESS);
+                                    updateMenuCount(menu, 1);
+                                    List<Music> list=BMContext.instance().getMenuMusics(menu.getMeid());
+                                    if(list!=null){
+                                        list.add(0,music);
+                                    }
                                 }
                             }
-
-                        }
-                    });
-        });
-        dialog.show();
+                        });
+            });
+        }
+        dialog.setTitle("我的歌单")
+                .show();
     }
 
     private void updateMenuCount(MusicMenu menu,int num){

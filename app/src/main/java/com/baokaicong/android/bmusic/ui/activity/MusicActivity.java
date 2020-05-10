@@ -23,6 +23,7 @@ import com.baokaicong.android.bmusic.bean.DownloadInfo;
 import com.baokaicong.android.bmusic.bean.Music;
 import com.baokaicong.android.bmusic.consts.ListenerTag;
 import com.baokaicong.android.bmusic.consts.PlayMode;
+import com.baokaicong.android.bmusic.consts.Strings;
 import com.baokaicong.android.bmusic.service.listener.GlobalMusicPlayListener;
 import com.baokaicong.android.bmusic.service.remoter.command.JumpCommand;
 import com.baokaicong.android.bmusic.service.remoter.command.NextCommand;
@@ -42,7 +43,7 @@ import java.io.File;
 public class MusicActivity extends AppCompatActivity {
     private ImageButton back,share;
     private TextView musicName,musicSinger,startTime,endTime;
-    private ImageView collectButton,downloadButton,menuButton;
+    private ImageView collectButton,downloadButton,statusButton;
     private SeekBar progressBar;
     private ImageView modeButton,preButton,nextButton,playButton,songListButton;
     private Handler handler;
@@ -68,7 +69,7 @@ public class MusicActivity extends AppCompatActivity {
         endTime=findViewById(R.id.music_end_time);
         collectButton=findViewById(R.id.music_collect);
         downloadButton=findViewById(R.id.music_download);
-        menuButton=findViewById(R.id.music_menu);
+        statusButton=findViewById(R.id.music_status);
         progressBar=findViewById(R.id.music_progress_bar);
         modeButton=findViewById(R.id.music_play_mode);
         preButton=findViewById(R.id.music_pre);
@@ -158,6 +159,8 @@ public class MusicActivity extends AppCompatActivity {
         });
 
         downloadButton.setOnClickListener((v)->{downloadMP3();});
+        statusButton.setOnClickListener((v)->{showMusicStatus();});
+
     }
 
     @Override
@@ -247,6 +250,14 @@ public class MusicActivity extends AppCompatActivity {
         }
     }
 
+    private void showMusicStatus(){
+        if(BMContext.instance().getPlayInfo().isLocalMusic()){
+            ToastUtil.showText(this, Strings.MUSIC_STATUS_LOCAL);
+        }else{
+            ToastUtil.showText(this, Strings.MUSIC_STATUS_NET);
+        }
+    }
+
     private class BottomGlobalMusicPlayListener implements GlobalMusicPlayListener {
         private boolean playing=false;
 
@@ -280,6 +291,8 @@ public class MusicActivity extends AppCompatActivity {
             progressBar.setMax(music.getDuration());
             progressBar.setProgress(0);
             playing=false;
+            boolean local=BMContext.instance().getPlayInfo().isLocalMusic();
+            statusButton.setImageResource(local?R.drawable.icon_local_30:R.drawable.icon_cloud_30);
         }
 
         @Override

@@ -95,10 +95,11 @@
         android:layout_marginLeft="3dp"
         android:background="@drawable/shape_bottom_disc"
         >
-        <ImageView
+        <com.baokaicong.android.bmusic.ui.view.NetImageView
             android:id="@+id/bottom_disk_img"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:scaleType="fitXY"
             android:src="@drawable/icon_disk_default"
             />
     </LinearLayout>

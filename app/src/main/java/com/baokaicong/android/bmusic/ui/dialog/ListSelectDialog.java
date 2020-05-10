@@ -13,6 +13,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -22,120 +23,96 @@ import com.baokaicong.android.bmusic.ui.adapter.MenuListAdapter;
 import com.baokaicong.android.bmusic.ui.view.ListRefreshFooterView;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-public class ListSelectDialog {
+public class ListSelectDialog extends Dialog{
     private ListView listView;
-    private Dialog dialog;
     private Context context;
     private View root;
     private TextView titleView;
+    private ListSelectAdapter adapter;
+    private Map<Integer, View.OnClickListener> listenerMap;
 
 
-    private ListSelectDialog(Context context){
+    public ListSelectDialog(Context context){
+        super(context,R.style.ActionSheetDialogStyle);
         this.context=context;
-    }
-
-    public static ListSelectDialogBuilder builder(Context context){
-
-        return new ListSelectDialogBuilder(context);
-    }
-
-    public static class ListSelectDialogBuilder{
-        private Context context;
-        private String title;
-        private List<String> list;
-        private List<Integer> imgList;
-        private AdapterView.OnItemClickListener listener;
-        public ListSelectDialogBuilder(Context context){
-            this.context=context;
-            list=new ArrayList<>();
-            imgList=new ArrayList<>();
-        }
-        public ListSelectDialogBuilder item(String text){
-            return item(text,-1);
-        }
-        public ListSelectDialogBuilder item(String text,int img){
-            if(img!=-1){
-                imgList.add(img);
-            }
-            list.add(text);
-            return this;
-        }
-
-        public ListSelectDialogBuilder listener(AdapterView.OnItemClickListener listener){
-            this.listener=listener;
-            return this;
-        }
-
-        public ListSelectDialogBuilder title(String text){
-            this.title=text;
-            return this;
-        }
-
-        public ListSelectDialog create(){
-            ListSelectDialog dialog=new ListSelectDialog(context);
-            dialog.initView();
-            dialog.setTitle(title);
-            dialog.loadListData(list,imgList);
-            if(listener!=null){
-                dialog.setOnItemClickListener(listener);
-            }
-            return dialog;
-        }
+        listenerMap=new HashMap<>();
+        initView();
     }
 
     private void initView(){
         root = LayoutInflater.from(context).inflate(R.layout.dialog_list_select, null);
         listView=root.findViewById(R.id.item_list);
         titleView=root.findViewById(R.id.dialog_title);
+        adapter=new ListSelectAdapter(context,new ArrayList<>(),new ArrayList<>());
+        listView.setAdapter(adapter);
+
         WindowManager windowManager = (WindowManager) context
                 .getSystemService(Context.WINDOW_SERVICE);
         Display display = windowManager.getDefaultDisplay();
         root.setMinimumWidth(display.getWidth());
-        dialog = new Dialog(context, R.style.ActionSheetDialogStyle);
-        dialog.setContentView(root);
-        Window dialogWindow = dialog.getWindow();
+        setContentView(root);
+
+        // 设置窗体位置
+        Window dialogWindow = getWindow();
         dialogWindow.setGravity(Gravity.LEFT | Gravity.BOTTOM);
         WindowManager.LayoutParams lp = dialogWindow.getAttributes();
         lp.x = 0;
         lp.y = 0;
         dialogWindow.setAttributes(lp);
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                View.OnClickListener listener;
+                if((listener=listenerMap.get(position))!=null){
+                    dismiss();
+                    listener.onClick(view);
+                }
+            }
+        });
+
+        findViewById(R.id.item_cancel).setOnClickListener((v)->{dismiss();});
     }
 
-    public ListSelectDialog setOnItemClickListener(AdapterView.OnItemClickListener listener){
-        if(listener!=null){
-            listView.setOnItemClickListener(listener);
-        }
+    // 添加选项
+    public ListSelectDialog addItem(String text, int imgId, View.OnClickListener listener){
+        int n=adapter.addItem(text,imgId);
+        listenerMap.put(n,listener);
         return this;
     }
 
-    public ListSelectDialog loadListData(List<String> list,List<Integer> imgList){
-        ListSelectAdapter adapter=new ListSelectAdapter(context,list,imgList);
-        listView.setAdapter(adapter);
-        return this;
-    }
-
+    // 设置标题
     public ListSelectDialog setTitle(String title){
         this.titleView.setText(title);
         return this;
     }
 
-    public void show(){
-        if (dialog != null) {
-            dialog.show();
+
+    public ListSelectDialog showCancelButton(boolean visible){
+
+        if(visible){
+            findViewById(R.id.item_cancel_line).setVisibility(View.VISIBLE);
+            findViewById(R.id.item_cancel).setVisibility(View.VISIBLE);
+        }else{
+            findViewById(R.id.item_cancel_line).setVisibility(View.GONE);
+            findViewById(R.id.item_cancel).setVisibility(View.GONE);
         }
+
+        return this;
     }
 
-    public void dismiss(){
-        try {
-            if (dialog != null && dialog.isShowing()) {
-                dialog.dismiss();
-            }
-            dialog = null;
-        } catch (Exception e) {
+    @Override
+    public void show() {
+        super.show();
+    }
 
-        }
+    @Override
+    public void dismiss() {
+        super.dismiss();
     }
 
     public class ListSelectAdapter extends BaseAdapter{
@@ -146,7 +123,7 @@ public class ListSelectDialog {
         private ImageView icon;
         private TextView text;
         public ListSelectAdapter(Context context, List<String> list){
-            this(context,list,null);
+            this(context,list,new ArrayList<>());
         }
 
         public ListSelectAdapter(Context context, List<String> list,List<Integer> imgList){
@@ -171,17 +148,27 @@ public class ListSelectDialog {
             return position;
         }
 
+        public int addItem(String text,int img,int index){
+            list.add(index,text);
+            imgList.add(index,img);
+            return list.size()-1;
+        }
+
+        public int addItem(String text,int img){
+            list.add(text);
+            imgList.add(img);
+            return list.size()-1;
+        }
+
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             convertView = layoutInflater.inflate(R.layout.dialog_view_list_select, null);
             icon=convertView.findViewById(R.id.item_icon);
-            if(imgList!=null && imgList.size()>position){
+            if(imgList.size()>position){
                 icon.setImageResource(imgList.get(position));
             }
             text=convertView.findViewById(R.id.item_text);
-            if(list!=null){
-                text.setText(list.get(position));
-            }
+            text.setText(list.get(position));
             return convertView;
         }
     }

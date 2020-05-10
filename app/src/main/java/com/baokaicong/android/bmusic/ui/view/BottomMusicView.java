@@ -27,6 +27,7 @@ import com.baokaicong.android.bmusic.service.listener.GlobalMusicPlayListener;
 import com.baokaicong.android.bmusic.service.remoter.command.JumpCommand;
 import com.baokaicong.android.bmusic.ui.activity.MusicActivity;
 import com.baokaicong.android.bmusic.ui.dialog.PlayListDialog;
+import com.baokaicong.android.bmusic.util.ToastUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +41,7 @@ public class BottomMusicView extends LinearLayout {
     private TextView singerText;
     private List<BottomMusicListener> listenerList;
     private ObjectAnimator diskAnimator;
-    private ImageView diskImg;
+    private NetImageView diskImg;
     private GlobalMusicPlayListener globalMusicPlayListener;
     private SeekBar progressBar;
     public interface BottomMusicListener{
@@ -217,6 +218,7 @@ public class BottomMusicView extends LinearLayout {
             singerText.setText(music.getSinger());
             progressBar.setMax(music.getDuration());
             progressBar.setProgress(0);
+            diskImg.setURL(music.getImg());
             playing=false;
         }
 
